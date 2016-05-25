@@ -1,4 +1,14 @@
+# my edits
+*.pyd
+*.exp
+*.lib
+*.obj
+.ipython_chekcpoints
+depricated_libdst3
+*.c
+
 # Windows image file caches
+
 Thumbs.db
 ehthumbs.db
 
