@@ -5,6 +5,7 @@
 *.obj
 .ipython_chekcpoints
 depricated_libdst3
+__pycache__
 *.c
 
 # Windows image file caches
