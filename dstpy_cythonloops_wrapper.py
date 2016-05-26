@@ -69,26 +69,30 @@ def calc_ab_diff_transfermatrix_clib(dx, L, q, zeta ):
 	# 
 	zzet, qq = np.meshgrid(zeta,q)
 	
-	kksq =  -np.abs(qq)**2 - zzet**2+0.0j
-	kk=np.sqrt(kksq)	
-	zzetsq = zzet**2
+	kksq     =  -np.abs(qq)**2 - zzet**2+0.0j
+	kk       = np.sqrt(kksq)	
+	zzetsq   = zzet**2
 	coshkdxm = np.cosh(kk*dx)
 	sinhkdxm = np.sinh(kk*dx) 
 	
 	
-	UU00 = coshkdxm - 1.0j*zzet / kk * sinhkdxm
-	UU01 = qq/kk * sinhkdxm
-	UU10 = -1.0 * np.conj(qq) / kk * sinhkdxm
-	UU11 = coshkdxm + 1.0j* zzet / kk * sinhkdxm
+	UU00 = coshkdxm - 1.0j * zzet / kk * sinhkdxm
+	UU11 = coshkdxm + 1.0j * zzet / kk * sinhkdxm
 	
-	UDASH00 = 1.0j * zzetsq/kksq * coshkdxm - (zzet*dx + 1.0j + 1.0j * zzetsq/kksq) * sinhkdxm / kk
-	UDASH01 = -qq * zzet / kksq * (dx * coshkdxm - sinhkdxm/kk)
-	UDASH10 = np.conj(qq ) *zzet / kksq *( dx * coshkdxm - sinhkdxm/kk)
-	UDASH11 = -1.0j * dx * zzetsq / kksq * coshkdxm - (zzet * dx -1.0j - 1.0j * zzetsq / kksq) * sinhkdxm/kk
+	UU01 =                qq  / kk * sinhkdxm
+	UU10 = -1.0 * np.conj(qq) / kk * sinhkdxm
+	
+	
+	UDASH00 =  1.0j * dx * zzetsq / kksq * coshkdxm - (zzet * dx + 1.0j + 1.0j * zzetsq / kksq) * sinhkdxm / kk
+	UDASH11 = -1.0j * dx * zzetsq / kksq * coshkdxm - (zzet * dx - 1.0j - 1.0j * zzetsq / kksq) * sinhkdxm / kk
+	
+	UDASH01 =        -qq  * zzet / kksq * (dx * coshkdxm - sinhkdxm/kk)
+	UDASH10 = np.conj(qq )* zzet / kksq *( dx * coshkdxm - sinhkdxm/kk)
+	
 	
 	S00, S10 , S20, S22, S30, S32= DSTloopTransferMatrixDIFF(len(zeta), len(q), 
 											UU00, UU01, UU10, UU11,
-											UDASH00, UDASH01, UDASH10,UDASH11)
+											UDASH00, UDASH01, UDASH10, UDASH11)
   
 	a = S00 * np.exp( 2.0j * zeta * L)
 	adiff = (S20 +1.0j * L *(S00 + S22)) * np.exp(2.0j * zeta * L)
