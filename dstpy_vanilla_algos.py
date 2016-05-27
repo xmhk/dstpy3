@@ -150,7 +150,6 @@ def calc_ab_diff_forwarddisc_vanilla(  dx, L, q, zeta  ):
 	
 def calc_ab_diff_ablowitzladik_vanilla(  dx, L, q, zeta  ):
 
-
 	#
 	# does not work (yet!!)
 	# 
@@ -162,13 +161,15 @@ def calc_ab_diff_ablowitzladik_vanilla(  dx, L, q, zeta  ):
 		v	  = np.zeros([len(q),2],dtype=complex)
 		vdiff = np.zeros([len(q),2],dtype=complex)
 		
-		v[0]	 = np.array([  1, 0] ) *				 np.exp(-1.0j * zeta[i] * -L)
+		v[0]	 = np.array([  1, 0] ) *			  np.exp(-1.0j * zeta[i] * -L)
 		vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
 		
 		for k in range(0,len(q)-1):
 			z = np.exp(-1.0j * zeta[i] * dx)			
-			A	  = np.array( [[z		  , q[k] *dx ], [-np.conj( q[k] *dx	 ), 1.0	 / z]])
-			Adiff = np.array( [[-1.0j * z,		0	 ], [	 0				  , 1.0j / z]]) *dx
+			A	  = np.array( [[z	             	  , q[k] *dx ], 
+			                   [-np.conj( q[k] )*dx   , 1.0	 / z]])
+			Adiff = np.array( [[-1.0j * z,		0.0j	 ],
+                            	[	 0.0j	  , 1.0j / z]]) *dx
 			
 			v[k+1]	   = np.dot ( A, v[k] )
 			vdiff[k+1] = np.dot( Adiff, v[k]) + np.dot( A , vdiff[k])

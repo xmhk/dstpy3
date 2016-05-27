@@ -51,7 +51,7 @@ class DSTObj():
 		self.calc_abdiff_methodnamesdict = {'TMC' : 'Transfer Matrix (C)',
 										'FDC' : 'Forward Discretization (C)',
 										'FD'  : 'Forward Discretization (Python)',
-										'AL'  : 'Ablowith Ladik (Python)'}									
+										'AL'  : 'Ablowitz Ladik (Python)'}									
 										  
 										  
 	def  help(self):
