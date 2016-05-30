@@ -1,7 +1,21 @@
 import numpy as np
-from DSTcython.cythonloops import DSTloopForward ,DSTloopForwarddiff, DSTloopTransferMatrix, DSTloopTransferMatrixDIFF
+from DSTcython.cythonloops import DSTloopForward,\
+								  DSTloopForwarddiff,\
+								  DSTloopTransferMatrix,\
+								  DSTloopTransferMatrixDIFF,\
+								  DSTloopRK4
 
 
+def calc_ab_rungekutta4_clib(dx, L, q, zeta):
+	a, b  = DSTloopRK4( dx,
+							len(zeta),
+							len(q),
+							q+0.0j,
+							L,
+							zeta)
+	
+	return a, b
+								  
 def calc_ab_forwarddisc_clib(dx, L, q, zeta):
 	a, b  = DSTloopForward( dx,
 							len(zeta),

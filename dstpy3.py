@@ -32,8 +32,11 @@ class DSTObj():
 					                'AL' : calc_ab_ablowitzladik_vanilla,
 					                'AL2': calc_ab_ablowitzladik2_vanilla,
 					                'FD' : calc_ab_forwarddisc_vanilla,
-									'FDC' : calc_ab_forwarddisc_clib
-									}
+									'FDC' : calc_ab_forwarddisc_clib,
+									'RK4' : calc_ab_rungekutta4_vanilla, 
+									'RK4C' : calc_ab_rungekutta4_clib
+									}       
+									        
 		self.calc_ab_methodnamesdict = 	 {'TMC': 'Transfer Matrix (C)',
 										  'TM' : 'Transfer Matrix (Python)',
 										  'CD' : 'Central Discretization (Python)',
@@ -41,7 +44,8 @@ class DSTObj():
 										  'AL' : 'Ablowitz Ladik (Python)',
 										  'AL2': 'Ablowitz Ladik Norm (Python)',
 										  'FD' : 'Forward Discretization (Python)',										  
-										  'FDC' : 'Forward Discretization (C)'}
+										  'FDC' : 'Forward Discretization (C)', 
+										  'RK4' : 'Runge-Kutta 4 (Python)'}
 										  
 		self.calc_abdiff_methodsdict = {'TMC' : calc_ab_diff_transfermatrix_clib,
 										'FDC' : calc_ab_diff_forwarddiff_clib,

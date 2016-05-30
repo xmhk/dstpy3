@@ -1,5 +1,30 @@
 import numpy as np
 
+    
+def calc_ab_rungekutta4_vanilla( dx, L, q, zeta ):
+    def fpk(qii, zetai):
+            return np.array( [[-1.0j * zetai,          qii],
+			                  [-np.conj(qii), 1.0j * zetai]] )        
+    a=np.zeros(len(zeta), dtype=complex)
+    b=np.zeros(len(zeta), dtype=complex)
+    for i in range(len(zeta)):
+        v = np.zeros([len(q),2],dtype=complex)
+        #calculate the first two elements of v
+        v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L)               
+        p0 = np.array( [[-1.0j * zeta[i], q[0]],[-np.conj(q[0]), 1.0j * zeta[i]]] )
+        v[1,:] = v[0,:] + dx * np.dot(p0, v[0,:])       
+        
+        for ii in range(0,len(q)-2):
+            k1 = np.dot( fpk( q[ii], zeta[i]) , v[ii])
+            k2 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k1)
+            k3 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k2)
+            k4 = np.dot( fpk( q[ii++2], zeta[i]), v[ii] + 2 * dx *k3)           
+            v[ii+2,:] = v[ii,:] + 2 * dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)               
+        a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+        b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+    return a, b
+
+
 def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	i =0
 	qlength = np.shape(q)[0]
