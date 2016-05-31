@@ -3,7 +3,8 @@ from DSTcython.cythonloops import DSTloopForward,\
 								  DSTloopForwarddiff,\
 								  DSTloopTransferMatrix,\
 								  DSTloopTransferMatrixDIFF,\
-								  DSTloopRK4
+								  DSTloopRK4,\
+								  DSTloopRK4diff
 
 
 def calc_ab_rungekutta4_clib(dx, L, q, zeta):
@@ -15,6 +16,15 @@ def calc_ab_rungekutta4_clib(dx, L, q, zeta):
 							zeta)
 	
 	return a, b
+	
+def calc_ab_diff_rk4_clib(dx, L, q, zeta):
+	a, b, adiff, bdiff  = DSTloopRK4diff( dx,
+							len(zeta),
+							len(q),
+							q+0.0j,
+							L,
+							zeta)	
+	return a, b, adiff, bdiff
 								  
 def calc_ab_forwarddisc_clib(dx, L, q, zeta):
 	a, b  = DSTloopForward( dx,

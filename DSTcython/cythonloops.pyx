@@ -16,7 +16,8 @@ cdef MatDotVec(complex A00, complex A01, complex A10, complex A11, complex v1, c
 	cdef complex r2 = A10 * v1 + A11 * v2
 	return r1, r2
 	
-
+# calc a, b Runge Kutta 4th order
+	
 def DSTloopRK4(double dx,
 			  int zetalength,			  
 			  int qlength,
@@ -86,6 +87,109 @@ def DSTloopRK4(double dx,
 		b[i] = v2[qlength-1] * np.exp( -1.0j * zetas[i] * L )	
 		i = i + 1
 	return a, b
+
+
+
+# calc a, b and derivaties (augmented) Runge Kutta 4th order
+	
+def DSTloopRK4diff(double dx,
+			  int zetalength,			  
+			  int qlength,
+			  np.ndarray[DTYPE_t, ndim=1] q,			
+			  complex L,
+			  np.ndarray[DTYPE_t, ndim=1] zetas):
+			  
+	cdef np.ndarray[DTYPE_t,ndim=1] a= np.zeros([zetalength], dtype=DTYPE)	
+	cdef np.ndarray[DTYPE_t,ndim=1] b= np.zeros([zetalength], dtype=DTYPE)	
+			  
+	cdef np.ndarray[DTYPE_t,ndim=1] adiff= np.zeros([zetalength], dtype=DTYPE)	
+	cdef np.ndarray[DTYPE_t,ndim=1] bdiff= np.zeros([zetalength], dtype=DTYPE)	
+	
+	cdef np.ndarray[DTYPE_t,ndim=1] v1= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] v2= np.zeros([qlength], dtype=DTYPE)	
+	cdef np.ndarray[DTYPE_t,ndim=1] v1diff= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] v2diff= np.zeros([qlength], dtype=DTYPE)	
+	
+	cdef complex Adiff00 = -1.0j * dx
+	cdef complex Adiff01 = 0.0j
+	cdef complex Adiff10 = 0.0j
+	cdef complex Adiff11 = 1.0j * dx
+	cdef complex pk00
+	cdef complex pk01
+	cdef complex pk10
+	cdef complex pk11
+	cdef complex k11 
+	cdef complex k12 
+	cdef complex k21 
+	cdef complex k22 
+	cdef complex k31
+	cdef complex k32
+	cdef complex k41 
+	cdef complex k42 
+	cdef complex tmp11
+	cdef complex tmp12
+	cdef complex tmp21
+	cdef complex tmp22
+	cdef int i=0
+	cdef int ii=0
+	cdef int k=0
+
+
+	while i<zetalength:
+		k=0		
+		while k < qlength:
+			v1[k]=0
+			v2[k]=0
+			k = k+1
+		
+		# set first two elements of v
+		v1[0]     =               np.exp( -1.0j * zetas[i] *  -L)
+		v1diff[0] =  -1.0j * -L * np.exp( -1.0j * zetas[i] * -L)
+		pk00, pk01, pk10, pk11 = RK4PK( q[0], zetas[i])
+		k11, k12 = MatDotVec( pk00, pk01, pk10, pk11, v1[0], v2[0])		
+		v1[1] = v1[0] + dx * k11
+		v2[1] = v2[0] + dx * k12
+		
+		tmp1,tmp2 = MatDotVec( Adiff00, Adiff01,Adiff10,Adiff11, v1[0], v2[0])
+		tmp3,tmp4 = MatDotVec( pk00, pk01, pk10, pk11, v1diff[0], v2diff[0])
+		
+		ii=0				
+		while ii < qlength-2:		
+			pk00, pk01, pk10, pk11 = RK4PK( q[ii], zetas[i] )
+			k11, k12 = MatDotVec(pk00, pk01, pk10, pk11, v1[ii], v2[ii] )
+			
+			
+			pk00, pk01, pk10, pk11 = RK4PK(q[ii+1], zetas[i])
+			k21, k22 = MatDotVec(pk00, pk01, pk10, pk11,
+														v1[ii] + dx * k11, 
+														v2[ii] + dx * k12 )
+			
+			k31, k32 = MatDotVec(pk00, pk01, pk10, pk11, 
+														v1[ii] + dx * k21, 
+														v2[ii] + dx * k22 )
+			
+			#next line: needed for diff
+			tmp3,tmp4 = MatDotVec( pk00, pk01, pk10, pk11, v1diff[ii+1], v2diff[ii+1])
+			#
+			pk00, pk01, pk10, pk11 = RK4PK(q[ii+2], zetas[i])
+			k41, k42 = MatDotVec(pk00, pk01, pk10, pk11, 
+														v1[ii] + 2* dx * k31, 
+														v2[ii] + 2 * dx * k32 )
+														
+			v1[ii+2]= v1[ii] + 2./6. * dx * (k11 + 2 * k21 + 2 * k31 + k41 )
+			v2[ii+2]= v2[ii] + 2./6. * dx * (k12 + 2 * k22 + 2 * k32 + k42 )
+			
+			pk00, pk01, pk10, pk11 = RK4PK(q[ii+1], zetas[i])
+			tmp1,tmp2 = MatDotVec( Adiff00, Adiff01,Adiff10,Adiff11, v1[ii+1], v2[ii+1])
+			v1diff[ii+2] = tmp1 + tmp3
+			v2diff[ii+2] = tmp2 + tmp4
+			
+			ii = ii + 1
+		a[i] = v1[qlength-1] * np.exp( 1.0j * zetas[i] * L )
+		b[i] = v2[qlength-1] * np.exp( -1.0j * zetas[i] * L )	
+		adiff[i] = (v1diff[qlength-1] + 1.0j * L * v1[qlength-1]) * np.exp(1.0j * zetas[i] *L)
+		i = i + 1
+	return a, b, adiff, bdiff
 
 
 

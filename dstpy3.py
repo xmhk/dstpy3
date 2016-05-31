@@ -45,17 +45,22 @@ class DSTObj():
 										  'AL2': 'Ablowitz Ladik Norm (Python)',
 										  'FD' : 'Forward Discretization (Python)',										  
 										  'FDC' : 'Forward Discretization (C)', 
-										  'RK4' : 'Runge-Kutta 4 (Python)'}
+										  'RK4' : 'Runge-Kutta 4 (Python)',
+										  'RK4C' : 'Runge-Kutta 4 (Python)'}
 										  
 		self.calc_abdiff_methodsdict = {'TMC' : calc_ab_diff_transfermatrix_clib,
 										'FDC' : calc_ab_diff_forwarddiff_clib,
+										'RK4C' : calc_ab_diff_rk4_clib,
+										'RK4' :  calc_abdiff_rungekutta_vanilla,
 										'FD'  : calc_ab_diff_forwarddisc_vanilla,
 										'AL'  : calc_ab_diff_ablowitzladik_vanilla}
 										
 		self.calc_abdiff_methodnamesdict = {'TMC' : 'Transfer Matrix (C)',
 										'FDC' : 'Forward Discretization (C)',
 										'FD'  : 'Forward Discretization (Python)',
-										'AL'  : 'Ablowitz Ladik (Python)'}									
+										'AL'  : 'Ablowitz Ladik (Python)',
+										'RK4C' : 'Runge Kutta 4 (C)',
+										'RK4' : 'Runge Kutta 4 (Python)'}									
 										  
 										  
 	def  help(self):
