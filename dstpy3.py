@@ -1,6 +1,7 @@
 import numpy as np
 from dstpy_cythonloops_wrapper import *
 from dstpy_vanilla_algos import *
+import numpy.linalg as linalg
 
 
 #import ctypes
@@ -60,18 +61,21 @@ class DSTObj():
 										'FD'  : 'Forward Discretization (Python)',
 										'AL'  : 'Ablowitz Ladik (Python)',
 										'RK4C' : 'Runge Kutta 4 (C)',
-										'RK4' : 'Runge Kutta 4 (Python)'}									
+										'RK4' : 'Runge Kutta 4 (Python)'}		
+
+												
 										  
 										  
 	def  help(self):
-		print("calc_ab methods available:")
-		print("(from self.calc_ab_methodsdict.keys())")
+		print("calc_ab methods available:")		
 		for k in self.calc_ab_methodsdict:
 			print("                           %s : %s"%(k, self.calc_ab_methodnamesdict[k]))
 			
 		print("\n\ncalc_abdiff methods available:")	
 		for k in self.calc_abdiff_methodsdict:
-			print("                           %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))			
+			print("                           %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))		
+
+		print("\n eigenvalue calculation: use .calc_evals() BUT this is slow and gives N false (mirrored) evals.")
 	
 	
 	def calc_ab(self,zetas, method = 'TMC'):
@@ -107,5 +111,23 @@ class DSTObj():
 				ad = ad[0]
 				bd = bd[0]
 		return a,b, ad, bd		
+		
+	def calc_evals(self):
+		len_q = len(self.q)
+		cdm = np.zeros( [len_q,len_q], dtype=complex)
+		for i in range(1, len_q):
+			cdm[i,i-1]=-1
+			cdm[i-1,i]=1
+			cdm[0, len_q-1] = -1
+			cdm[len_q-1, 0] = 1
+		cdm = cdm / 2. /self.dx
+		MM = np.zeros([2*len_q, 2*len_q], dtype=complex)
+		MM[0:len_q, 0:len_q]=cdm
+		MM[len_q:2*len_q,len_q:2*len_q] = -cdm
+		MM[len_q:2*len_q, 0:len_q] = -np.diag(np.conj(self.q))
+		MM[0:len_q, len_q:2*len_q]=  -np.diag(self.q)
+		MM = 1.0j * MM    
+		evals, evecs = linalg.eig(MM)
+		return evals
 			
 		
