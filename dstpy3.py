@@ -8,8 +8,8 @@ import numpy.linalg as linalg
 
 
 class DSTObj():
-	def __init__(self, field, tvec, b2, gamm):
-		self.b2 = b2
+	def __init__(self, field, tvec, fiberbeta2, gamm):
+		self.b2 = fiberbeta2
 		self.gamm = gamm
 		dt = tvec[1]-tvec[0]
 		npoints = len(tvec)
@@ -49,19 +49,22 @@ class DSTObj():
 										  'RK4' : 'Runge-Kutta 4 (Python)',
 										  'RK4C' : 'Runge-Kutta 4 (Python)'}
 										  
-		self.calc_abdiff_methodsdict = {'TMC' : calc_ab_diff_transfermatrix_clib,
-										'FDC' : calc_ab_diff_forwarddiff_clib,
-										'RK4C' : calc_ab_diff_rk4_clib,
-										'RK4' :  calc_abdiff_rungekutta_vanilla,
-										'FD'  : calc_ab_diff_forwarddisc_vanilla,
-										'AL'  : calc_ab_diff_ablowitzladik_vanilla}
+		self.calc_abdiff_methodsdict = {#'TMC' : calc_ab_diff_transfermatrix_clib,
+										#'FDC' : calc_ab_diff_forwarddiff_clib,
+										#'RK4C' : calc_ab_diff_rk4_clib,
+										#'RK4' :  calc_abdiff_rungekutta_vanilla,
+										#'FD'  : calc_ab_diff_forwarddisc_vanilla,
+										'AL'  : calc_ab_diff_ablowitzladik_vanilla,
+										'ALC'  : calc_al_diff_clib}
 										
-		self.calc_abdiff_methodnamesdict = {'TMC' : 'Transfer Matrix (C)',
-										'FDC' : 'Forward Discretization (C)',
-										'FD'  : 'Forward Discretization (Python)',
+		self.calc_abdiff_methodnamesdict = {#'TMC' : 'Transfer Matrix (C)',
+										#'FDC' : 'Forward Discretization (C)',
+										#'FD'  : 'Forward Discretization (Python)',
 										'AL'  : 'Ablowitz Ladik (Python)',
-										'RK4C' : 'Runge Kutta 4 (C)',
-										'RK4' : 'Runge Kutta 4 (Python)'}		
+										'ALC'  : 'Ablowitz Ladik (C)',
+										#'RK4C' : 'Runge Kutta 4 (C)',
+										#'RK4' : 'Runge Kutta 4 (Python)'
+										}		
 
 												
 										  
@@ -78,7 +81,7 @@ class DSTObj():
 		print("\n eigenvalue calculation: use .calc_evals() BUT this is slow and gives N false (mirrored) evals.")
 	
 	
-	def calc_ab(self,zetas, method = 'TMC'):
+	def calc_ab(self,zetas, method = 'RK4C'):
 		if method not in self.calc_ab_methodsdict.keys():
 			print("\n calc_ab method should be in ",self.calc_ab_methodsdict.keys())
 			a = 0
@@ -94,7 +97,7 @@ class DSTObj():
 				b = b[0]
 		return a,b
 		
-	def calc_abdiff(self,zetas, method = 'TMC'):
+	def calc_abdiff(self,zetas, method = 'ALC'):
 		if method not in self.calc_abdiff_methodsdict.keys():
 			print("\n calc_ab method should be in ",self.calc_ab_methodsdict.keys())
 			a = 0

@@ -58,3 +58,7 @@ $RECYCLE.BIN/
 Network Trash Folder
 Temporary Items
 .apdisk
+*.ipynb
+.ipynb_checkpoints/DST3_tests-checkpoint.ipynb
+*.pyc
+__pycache__/dstpy_cythonloops_wrapper.cpython-35.pyc

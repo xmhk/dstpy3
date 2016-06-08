@@ -23,42 +23,6 @@ def calc_ab_rungekutta4_vanilla( dx, L, q, zeta ):
         a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
         b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
     return a, b
-	
-	
-def calc_abdiff_rungekutta_vanilla( dx, L, q, zeta ):
-    def fpk(qii, zetai):
-            return np.array( [[-1.0j * zetai,          qii],
-                              [-np.conj(qii), 1.0j * zetai]] )
-
-    a=np.zeros(len(zeta), dtype=complex)
-    b=np.zeros(len(zeta), dtype=complex)
-    adiff=np.zeros(len(zeta), dtype=complex)
-    bdiff=np.zeros(len(zeta), dtype=complex)
-
-    for i in range(len(zeta)):
-        v = np.zeros([len(q),2],dtype=complex)
-        vdiff = np.zeros([len(q),2],dtype=complex)
-        #calculate the first two elements of v
-        v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L)
-        p0 = np.array( [[-1.0j * zeta[i], q[0]],[-np.conj(q[0]), 1.0j * zeta[i]]] )
-        v[1,:] = v[0,:] + dx * np.dot(p0, v[0,:])
-        Adiff = np.array( [[ -1.0j, 0], [0, 1.0j]] ) * dx
-        vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
-        vdiff[1] = np.dot( Adiff, v[0]) + np.dot( p0 , vdiff[0])
-
-        for ii in range(0,len(q)-2):
-            k1 = np.dot( fpk( q[ii], zeta[i]) , v[ii])
-            k2 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k1)
-            k3 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k2)
-            k4 = np.dot( fpk( q[ii++2], zeta[i]), v[ii] + 2 * dx *k3)
-            v[ii+2,:] = v[ii,:] + 2 * dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
-            vdiff[ii+2] = np.dot( Adiff, v[ii+1]) + np.dot( fpk( q[ii+1], zeta[i]) , vdiff[ii+1])
-        a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
-        adiff[i] = (vdiff[-1,0] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
-        b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
-    return a, b, adiff, bdiff
-	
-
 
 def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	i =0
@@ -184,35 +148,10 @@ def calc_ab_forwarddisc_vanilla(  dx, L, q, zeta  ):
 		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
 	return a, b	
 
-def calc_ab_diff_forwarddisc_vanilla(  dx, L, q, zeta  ):	 
-	a=np.zeros(len(zeta), dtype=complex)
-	adiff=np.zeros(len(zeta), dtype=complex)	
-	b=np.zeros(len(zeta), dtype=complex)
-	bdiff=np.zeros(len(zeta), dtype=complex)
-	for i in range(len(zeta)):
-		v = np.zeros([len(q),2],dtype=complex)
-		vdiff = np.zeros([len(q),2],dtype=complex)
-		#calculate the first element of v
-		v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L) 
-		vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)		
-		#calculate v[1]...v[N-1]
-		for k in range(0,len(q)-1):
-			A = np.array( [[-1.0j * zeta[i], q[k]],[-np.conj(q[k]), 1.0j * zeta[i]]] )
-			Adiff = np.array( [[ -1.0j, 0], [0, 1.0j]] ) * dx
-			v[k+1,:] = v[k,:] + dx * np.dot(A, v[k,:])		
-			vdiff[k+1] = np.dot( Adiff, v[k]) + np.dot( A , vdiff[k])
-		a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
-		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
-		adiff[i] = (vdiff[-1,0] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
-		bdiff[i] = np.array([0])  #not calculated yet
-	return a, b	, adiff, bdiff
-	
+
 	
 def calc_ab_diff_ablowitzladik_vanilla(  dx, L, q, zeta  ):
-
-	#
-	# does not work (yet!!)
-	# 
+	
 	a=np.zeros(len(zeta), dtype=complex)
 	adiff=np.zeros(len(zeta), dtype=complex)
 	b=np.zeros(len(zeta), dtype=complex)
@@ -239,3 +178,63 @@ def calc_ab_diff_ablowitzladik_vanilla(  dx, L, q, zeta  ):
 		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
 		bdiff = np.array([0])
 	return a, b	, adiff, bdiff
+
+#below:	 does not work correctly 
+	
+# def calc_ab_diff_forwarddisc_vanilla(  dx, L, q, zeta  ):	 
+	# a=np.zeros(len(zeta), dtype=complex)
+	# adiff=np.zeros(len(zeta), dtype=complex)	
+	# b=np.zeros(len(zeta), dtype=complex)
+	# bdiff=np.zeros(len(zeta), dtype=complex)
+	# for i in range(len(zeta)):
+		# v = np.zeros([len(q),2],dtype=complex)
+		# vdiff = np.zeros([len(q),2],dtype=complex)
+		# #calculate the first element of v
+		# v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L) 
+		# vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)		
+		# #calculate v[1]...v[N-1]
+		# for k in range(0,len(q)-1):
+			# A = np.array( [[-1.0j * zeta[i], q[k]],[-np.conj(q[k]), 1.0j * zeta[i]]] )
+			# Adiff = np.array( [[ -1.0j, 0], [0, 1.0j]] ) * dx
+			# v[k+1,:] = v[k,:] + dx * np.dot(A, v[k,:])		
+			# vdiff[k+1] = np.dot( Adiff, v[k]) + np.dot( A , vdiff[k])
+		# a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		# b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+		# adiff[i] = (vdiff[-1,0] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+		# bdiff[i] = np.array([0])  #not calculated yet
+	# return a, b	, adiff, bdiff
+	
+	
+# def calc_abdiff_rungekutta_vanilla( dx, L, q, zeta ):
+    # def fpk(qii, zetai):
+            # return np.array( [[-1.0j * zetai,          qii],
+                              # [-np.conj(qii), 1.0j * zetai]] )
+
+    # a=np.zeros(len(zeta), dtype=complex)
+    # b=np.zeros(len(zeta), dtype=complex)
+    # adiff=np.zeros(len(zeta), dtype=complex)
+    # bdiff=np.zeros(len(zeta), dtype=complex)
+
+    # for i in range(len(zeta)):
+        # v = np.zeros([len(q),2],dtype=complex)
+        # vdiff = np.zeros([len(q),2],dtype=complex)
+        # #calculate the first two elements of v
+        # v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L)
+        # p0 = np.array( [[-1.0j * zeta[i], q[0]],[-np.conj(q[0]), 1.0j * zeta[i]]] )
+        # v[1,:] = v[0,:] + dx * np.dot(p0, v[0,:])
+        # Adiff = np.array( [[ -1.0j, 0], [0, 1.0j]] ) * dx
+        # vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
+        # vdiff[1] = np.dot( Adiff, v[0]) + np.dot( p0 , vdiff[0])
+
+        # for ii in range(0,len(q)-2):
+            # k1 = np.dot( fpk( q[ii], zeta[i]) , v[ii])
+            # k2 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k1)
+            # k3 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k2)
+            # k4 = np.dot( fpk( q[ii++2], zeta[i]), v[ii] + 2 * dx *k3)
+            # v[ii+2,:] = v[ii,:] + 2 * dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
+            # vdiff[ii+2] = np.dot( Adiff, v[ii+1]) + np.dot( fpk( q[ii+1], zeta[i]) , vdiff[ii+1])
+        # a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+        # adiff[i] = (vdiff[-1,0] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+        # b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+    # return a, b, adiff, bdiff
+		

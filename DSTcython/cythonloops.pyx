@@ -89,9 +89,147 @@ def DSTloopRK4(double dx,
 	return a, b
 
 
+#calc coefficents a and b and their derivatives	(ablowitz ladik method)
 
-# calc a, b and derivaties (augmented) Runge Kutta 4th order
+def DSTloopALdiff(double dx,
+			  int zetalength,			  
+			  int qlength,
+			  np.ndarray[DTYPE_t, ndim=1] q,			
+			  complex L,
+			  np.ndarray[DTYPE_t, ndim=1] zetas):
+			  
+	cdef np.ndarray[DTYPE_t,ndim=1] a= np.zeros([zetalength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] adiff= np.zeros([zetalength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] b= np.zeros([zetalength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] bdiff= np.zeros([zetalength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] v1= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] v2= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] vdiff1= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] vdiff2= np.zeros([qlength], dtype=DTYPE)	
+	cdef int i=0
+	cdef int k=0
+	cdef complex A00 = 0
+	cdef complex A01 = 0
+	cdef complex A10 = 0
+	cdef complex A11 = 0
+
 	
+	cdef complex z = 0
+	cdef complex Adiff00 = 0.0	
+	cdef complex Adiff11 = 0.0
+	
+	
+	while i<zetalength:
+		k=0		
+		while k < qlength:
+			v1[k]=0
+			v2[k]=0
+			vdiff1[k] = 0
+			vdiff2[k] = 0
+			k = k+1
+		v1[0]     =              np.exp( -1.0j * zetas[i] * -L)
+		vdiff1[0] = -1.0j * -L * np.exp( -1.0j * zetas[i] * -L)
+		k=0
+		while k < qlength-1:
+			z = np.exp( -1.0j * zetas[i] * dx)		
+			A00 = z
+			A01 = q[k] * dx
+			A10 = -np.conj(q[k]) * dx
+			A11 = 1.0 / z
+			Adiff00 = -1.0j * z * dx
+			Adiff11 = 1.0j / z * dx	
+			v1[k+1]= A00* v1[k] + A01 * v2[k]
+			v2[k+1]= A10* v1[k] + A11 * v2[k]			
+			vdiff1[k+1] = Adiff00* v1[k]    + A00* vdiff1[k] + A01 * vdiff2[k]
+			vdiff2[k+1] = Adiff11* v2[k]    + A10* vdiff1[k] + A11 * vdiff2[k]
+			k = k + 1
+		a[i] = v1[qlength-1] * np.exp(  1.0j * zetas[i] * L )
+		b[i] = v2[qlength-1] * np.exp( -1.0j * zetas[i] * L )
+		adiff[i] = ( vdiff1[qlength-1] + 1.0j * L * v1[qlength-1] ) * np.exp(1.0j * zetas[i] * L)
+		i = i + 1
+	return a, b, adiff
+	
+	
+#calc coefficents a and b(forward difference method)
+
+def DSTloopForward(double dx,
+			  int zetalength,			  
+			  int qlength,
+			  np.ndarray[DTYPE_t, ndim=1] q,			
+			  complex L,
+			  np.ndarray[DTYPE_t, ndim=1] zetas):			  
+	cdef np.ndarray[DTYPE_t,ndim=1] a= np.zeros([zetalength], dtype=DTYPE)	
+	cdef np.ndarray[DTYPE_t,ndim=1] b= np.zeros([zetalength], dtype=DTYPE)	
+	cdef np.ndarray[DTYPE_t,ndim=1] v1= np.zeros([qlength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] v2= np.zeros([qlength], dtype=DTYPE)	
+	cdef int i=0
+	cdef int k=0
+	cdef complex A00 = 0
+	cdef complex A01 = 0
+	cdef complex A10 = 0
+	cdef complex A11 = 0	
+	while i<zetalength:
+		k=0		
+		while k < qlength:
+			v1[k]=0
+			v2[k]=0
+			k = k+1
+		v1[0] = np.exp( -1.0j * zetas[i] *  -L)
+		k=0
+		while k < qlength-1:		
+			A00 = -1.0j * zetas[i]
+			A01 = q[k] 
+			A10 = -np.conj(q[k])
+			A11 = 1.0j * zetas[i]			
+			v1[k+1]= v1[k] + dx * A00* v1[k] + A01 * v2[k]
+			v2[k+1]= v2[k] + dx * A10* v1[k] + A11 * v2[k]
+			k = k + 1
+		a[i] = v1[qlength-1] * np.exp( 1.0j * zetas[i] * L )
+		b[i] = v2[qlength-1] * np.exp( -1.0j * zetas[i] * L )	
+		i = i + 1
+	return a, b
+			
+
+		
+		
+#calc coefficents a and b  (tranfer matrix method)
+def DSTloopTransferMatrix(int zetalength,			  
+			int qlength,
+			np.ndarray[DTYPE_t, ndim=2] UU00,
+			np.ndarray[DTYPE_t, ndim=2] UU01,
+			np.ndarray[DTYPE_t, ndim=2] UU10,
+			np.ndarray[DTYPE_t, ndim=2] UU11):
+	cdef int i=0	
+	cdef int ii=0
+	cdef np.ndarray[DTYPE_t,ndim=2] S= np.zeros([2,2], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=2] tmpS= np.zeros([2,2], dtype=DTYPE)	  
+	cdef np.ndarray[DTYPE_t,ndim=1] S00= np.zeros([zetalength], dtype=DTYPE)
+	cdef np.ndarray[DTYPE_t,ndim=1] S10= np.zeros([zetalength], dtype=DTYPE)
+	while i<zetalength:
+		S[0,0]=1.0
+		S[0,1]=0.0
+		S[1,0]=0.0
+		S[1,1]=1.0		  
+		ii = qlength-1
+		while ii>=0:		   
+			tmpS[0,0] = S[0,0] * UU00[ii,i] + S[0,1] * UU10[ii,i]
+			tmpS[0,1] = S[0,0] * UU01[ii,i] + S[0,1] * UU11[ii,i]
+			tmpS[1,0] = S[1,0] * UU00[ii,i] + S[1,1] * UU10[ii,i]
+			tmpS[1,1] = S[1,0] * UU01[ii,i] + S[1,1] * UU11[ii,i]
+			S[0,0]=tmpS[0,0]
+			S[0,1]=tmpS[0,1]
+			S[1,0]=tmpS[1,0]
+			S[1,1]=tmpS[1,1]
+			ii=ii-1
+		S00[i]=S[0,0]
+		S10[i]=S[1,0]
+		i = i+1
+	return S00, S10
+	
+	
+	
+# calc a, b and derivaties Runge Kutta 4th order  DOES NOT WORK YET
+"""	
 def DSTloopRK4diff(double dx,
 			  int zetalength,			  
 			  int qlength,
@@ -190,55 +328,15 @@ def DSTloopRK4diff(double dx,
 		adiff[i] = (v1diff[qlength-1] + 1.0j * L * v1[qlength-1]) * np.exp(1.0j * zetas[i] *L)
 		i = i + 1
 	return a, b, adiff, bdiff
+"""
 
 
 
 
 
 
-#calc coefficents a and b(forward difference method)
-
-def DSTloopForward(double dx,
-			  int zetalength,			  
-			  int qlength,
-			  np.ndarray[DTYPE_t, ndim=1] q,			
-			  complex L,
-			  np.ndarray[DTYPE_t, ndim=1] zetas):			  
-	cdef np.ndarray[DTYPE_t,ndim=1] a= np.zeros([zetalength], dtype=DTYPE)	
-	cdef np.ndarray[DTYPE_t,ndim=1] b= np.zeros([zetalength], dtype=DTYPE)	
-	cdef np.ndarray[DTYPE_t,ndim=1] v1= np.zeros([qlength], dtype=DTYPE)
-	cdef np.ndarray[DTYPE_t,ndim=1] v2= np.zeros([qlength], dtype=DTYPE)	
-	cdef int i=0
-	cdef int k=0
-	cdef complex A00 = 0
-	cdef complex A01 = 0
-	cdef complex A10 = 0
-	cdef complex A11 = 0	
-	while i<zetalength:
-		k=0		
-		while k < qlength:
-			v1[k]=0
-			v2[k]=0
-			k = k+1
-		v1[0] = np.exp( -1.0j * zetas[i] *  -L)
-		k=0
-		while k < qlength-1:		
-			A00 = -1.0j * zetas[i]
-			A01 = q[k] 
-			A10 = -np.conj(q[k])
-			A11 = 1.0j * zetas[i]			
-			v1[k+1]= v1[k] + dx * A00* v1[k] + A01 * v2[k]
-			v2[k+1]= v2[k] + dx * A10* v1[k] + A11 * v2[k]
-			k = k + 1
-		a[i] = v1[qlength-1] * np.exp( 1.0j * zetas[i] * L )
-		b[i] = v2[qlength-1] * np.exp( -1.0j * zetas[i] * L )	
-		i = i + 1
-	return a, b
-			
-
-
-#calc coefficents a and b and their derivatives	(forward difference method)
-
+#calc coefficents a and b and their derivatives	(forward difference method)  DOES NOT WORK YET
+"""
 def DSTloopForwarddiff(double dx,
 			  int zetalength,			  
 			  int qlength,
@@ -296,49 +394,15 @@ def DSTloopForwarddiff(double dx,
 		adiff[i] = ( vdiff1[qlength-1] + 1.0j * L * v1[qlength-1] ) * np.exp(1.0j * zetas[i] * L)
 		i = i + 1
 	return a, b, adiff
-			
+"""			
 			
 
 		
 
 		
-		
-		
-#calc coefficents a and b  (tranfer matrix method)
-def DSTloopTransferMatrix(int zetalength,			  
-			int qlength,
-			np.ndarray[DTYPE_t, ndim=2] UU00,
-			np.ndarray[DTYPE_t, ndim=2] UU01,
-			np.ndarray[DTYPE_t, ndim=2] UU10,
-			np.ndarray[DTYPE_t, ndim=2] UU11):
-	cdef int i=0	
-	cdef int ii=0
-	cdef np.ndarray[DTYPE_t,ndim=2] S= np.zeros([2,2], dtype=DTYPE)
-	cdef np.ndarray[DTYPE_t,ndim=2] tmpS= np.zeros([2,2], dtype=DTYPE)	  
-	cdef np.ndarray[DTYPE_t,ndim=1] S00= np.zeros([zetalength], dtype=DTYPE)
-	cdef np.ndarray[DTYPE_t,ndim=1] S10= np.zeros([zetalength], dtype=DTYPE)
-	while i<zetalength:
-		S[0,0]=1.0
-		S[0,1]=0.0
-		S[1,0]=0.0
-		S[1,1]=1.0		  
-		ii = qlength-1
-		while ii>=0:		   
-			tmpS[0,0] = S[0,0] * UU00[ii,i] + S[0,1] * UU10[ii,i]
-			tmpS[0,1] = S[0,0] * UU01[ii,i] + S[0,1] * UU11[ii,i]
-			tmpS[1,0] = S[1,0] * UU00[ii,i] + S[1,1] * UU10[ii,i]
-			tmpS[1,1] = S[1,0] * UU01[ii,i] + S[1,1] * UU11[ii,i]
-			S[0,0]=tmpS[0,0]
-			S[0,1]=tmpS[0,1]
-			S[1,0]=tmpS[1,0]
-			S[1,1]=tmpS[1,1]
-			ii=ii-1
-		S00[i]=S[0,0]
-		S10[i]=S[1,0]
-		i = i+1
-	return S00, S10
 	
-#calc coefficents a and b and their derivatives	
+#calc coefficents a and b and their derivatives	 DOES NOT WORK YET
+"""
 def DSTloopTransferMatrixDIFF(int zetalength,		   
 			int qlength,
 			np.ndarray[DTYPE_t, ndim=2] UU00,
@@ -421,3 +485,4 @@ def DSTloopTransferMatrixDIFF(int zetalength,
 		S32[i]=S[3,2]
 		i = i+1
 	return S00, S10, S20, S22, S30, S32
+"""
