@@ -78,7 +78,7 @@ class DSTObj():
 		for k in self.calc_abdiff_methodsdict:
 			print("                           %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))		
 
-		print("\n eigenvalue calculation: use .calc_evals() BUT this is slow and gives N false (mirrored) evals.")
+		print("\neigenvalue calculation: use .calc_evals() BUT this is slow and gives N false (mirrored) evals.")
 	
 	
 	def calc_ab(self,zetas, method = 'RK4C'):

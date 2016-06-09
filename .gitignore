@@ -62,3 +62,4 @@ Temporary Items
 .ipynb_checkpoints/DST3_tests-checkpoint.ipynb
 *.pyc
 __pycache__/dstpy_cythonloops_wrapper.cpython-35.pyc
+DST3_tests.ipynb
