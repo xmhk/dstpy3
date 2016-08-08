@@ -3,9 +3,24 @@ from dstpy_cythonloops_wrapper import *
 from dstpy_vanilla_algos import *
 import numpy.linalg as linalg
 
-
-#import ctypes
-
+#the DST object and the algorithms implemented here are heavily based by the following papers
+#
+# G. BOFFETTA AND A. R. OSBORNE	 Computation of the Direct Scattering Transform for the Nonlineare Schroedinger Equation
+#								Journal of Comp Phys 102, p 252-264, (1992)	  
+#								http://personalpages.to.infn.it/~boffetta/Papers/bo92.pdf
+#
+#
+#
+# Mansoor I. Yousefi, Frank R. Kschischang:	 Information Transmission using the Nonlinear Fourier Transform, Part I
+#											 https://arxiv.org/abs/1202.3653
+# 
+#											 Information Transmission using the Nonlinear Fourier Transform, Part II
+#											 http://arxiv.org/abs/1204.0830				   
+#
+#
+#											 Information Transmission using the Nonlinear Fourier Transform, Part III
+#											 http://arxiv.org/abs/1302.2875
+#
 
 class DSTObj():
 	def __init__(self, field, tvec, fiberbeta2, gamm):
@@ -27,18 +42,18 @@ class DSTObj():
 		self.ommax = np.floor( npoints / 2. ) * self.scaled_dom
 		
 		self.calc_ab_methodsdict = {'TMC': calc_ab_transfermatrix_clib,
-					                'TM' : calc_ab_transfermatrix_vanilla,
-					                'CD' : calc_ab_centraldifference_vanilla,
-					                'CN' : calc_ab_cranknicolson_vanilla,
-					                'AL' : calc_ab_ablowitzladik_vanilla,
-					                'AL2': calc_ab_ablowitzladik2_vanilla,
-					                'FD' : calc_ab_forwarddisc_vanilla,
+									'TM' : calc_ab_transfermatrix_vanilla,
+									'CD' : calc_ab_centraldifference_vanilla,
+									'CN' : calc_ab_cranknicolson_vanilla,
+									'AL' : calc_ab_ablowitzladik_vanilla,
+									'AL2': calc_ab_ablowitzladik2_vanilla,
+									'FD' : calc_ab_forwarddisc_vanilla,
 									'FDC' : calc_ab_forwarddisc_clib,
 									'RK4' : calc_ab_rungekutta4_vanilla, 
 									'RK4C' : calc_ab_rungekutta4_clib
-									}       
-									        
-		self.calc_ab_methodnamesdict = 	 {'TMC': 'Transfer Matrix (C)',
+									}		
+											
+		self.calc_ab_methodnamesdict =	 {'TMC': 'Transfer Matrix (C)',
 										  'TM' : 'Transfer Matrix (Python)',
 										  'CD' : 'Central Discretization (Python)',
 										  'CN' : 'Crank Nicolson (Python)',
@@ -69,16 +84,16 @@ class DSTObj():
 												
 										  
 										  
-	def  help(self):
+	def	 help(self):
 		print("calc_ab methods available:")		
 		for k in self.calc_ab_methodsdict:
-			print("                           %s : %s"%(k, self.calc_ab_methodnamesdict[k]))
+			print("							  %s : %s"%(k, self.calc_ab_methodnamesdict[k]))
 			
 		print("\n\ncalc_abdiff methods available:")	
 		for k in self.calc_abdiff_methodsdict:
-			print("                           %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))		
+			print("							  %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))		
 
-		print("\neigenvalue calculation: use .calc_evals() BUT this is slow and gives N false (mirrored) evals.")
+		print("\neigenvalue calculation: use .calc_evals() of .calc_evals_cdm BUT this is slow.")
 	
 	
 	def calc_ab(self,zetas, method = 'RK4C'):
@@ -114,13 +129,46 @@ class DSTObj():
 				ad = ad[0]
 				bd = bd[0]
 		return a,b, ad, bd		
-		
+
+  
+	
 	def calc_evals(self):
+		#matrix spectral method after Yousefi
+		def matrixGAMMA(vGAMMA):
+			LGAMMA2 = np.int(	len(vGAMMA)/2)
+			GAMMA	= np.zeros( [len(vGAMMA), len(vGAMMA)], dtype=complex)
+			for row in range( len(vGAMMA)):
+				mstart = max( 0, row-LGAMMA2+1 )	#col index to start filling matrix GAMMA with elements
+				mend   = min( row+LGAMMA2+1, 2*LGAMMA2 )#col index to stop ...
+				gstart = min( row, LGAMMA2-1 )		#start index of vGAMMA to fill matrix with
+				ii = mstart
+				gammi = gstart
+				while ii<mend:
+				  GAMMA[row, ii] = vGAMMA[gammi]
+				  ii+=1
+				  gammi+=-1	  
+			return GAMMA		
+
+		qft   = np.fft.ifft(self.q)
+		M     = len(self.q)
+		M2    = int( M/2.0)
+		Gamma = matrixGAMMA(qft)
+		Omega = 2*np.pi / 2/self.L * np.diag(np.arange(-M2,M2))	
+		
+		matrixA = np.zeros([2*M,2*M], dtype=complex)
+		matrixA[0:M, 0:M]    = Omega
+		matrixA[0:M, M:2*M]  = Gamma
+		matrixA[M:2*M, 0:M]  = -1 * np.conj(np.transpose(Gamma))
+		matrixA[M:2*M,M:2*M] = -1 * Omega
+		evals, evecs = linalg.eig(matrixA)
+		return evals	
+		
+	def calc_evals_cdm(self):  #method based on central difference matrix 
 		len_q = len(self.q)
 		cdm = np.zeros( [len_q,len_q], dtype=complex)
 		for i in range(1, len_q):
-			cdm[i,i-1]=-1
-			cdm[i-1,i]=1
+			cdm[i,i-1] = -1
+			cdm[i-1,i] = 1
 			cdm[0, len_q-1] = -1
 			cdm[len_q-1, 0] = 1
 		cdm = cdm / 2. /self.dx
@@ -128,9 +176,9 @@ class DSTObj():
 		MM[0:len_q, 0:len_q]=cdm
 		MM[len_q:2*len_q,len_q:2*len_q] = -cdm
 		MM[len_q:2*len_q, 0:len_q] = -np.diag(np.conj(self.q))
-		MM[0:len_q, len_q:2*len_q]=  -np.diag(self.q)
-		MM = 1.0j * MM    
+		MM[0:len_q, len_q:2*len_q]=	 -np.diag(self.q)
+		MM = 1.0j * MM	  
 		evals, evecs = linalg.eig(MM)
 		return evals
 			
-		
+
