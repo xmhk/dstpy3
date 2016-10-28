@@ -24,12 +24,15 @@ from scipy.linalg import toeplitz
 #
 
 class DSTObj():
-	def __init__(self, field, tvec, fiberbeta2, gamm):
+	def __init__(self, field, tvec, fiberbeta2, gamm, t0scaleext = None):
 		self.b2 = fiberbeta2
 		self.gamm = gamm
 		dt = tvec[1]-tvec[0]
 		npoints = len(tvec)
-		t0scale = dt;
+		if t0scaleext == None:
+			t0scale = dt;
+		else:
+			t0scale = t0scaleext
 		p0scale = np.sqrt( t0scale * t0scale * self.gamm / np.abs(self.b2))		   
 		self.xvec = tvec / t0scale
 		self.dx = self.xvec[1] - self.xvec[0]
