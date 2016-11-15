@@ -100,7 +100,7 @@ class DSTObj():
 		print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
 	
 	
-	def calc_ab(self,zetas, method = 'RK4C'):
+	def calc_ab(self,zetas, method = 'TMC'):
 		if method not in self.calc_ab_methodsdict.keys():
 			print("\n calc_ab method should be in ",self.calc_ab_methodsdict.keys())
 			a = 0
