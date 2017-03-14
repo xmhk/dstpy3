@@ -2,6 +2,8 @@ import numpy as np
 from mpmath import fsum, fprod, fsub,fadd
 from mpmath import conj as fconj
 from mpmath import exp as fexp
+from mpmath import re as mpmre
+from mpmath import im as mpmim
 from mpmath import mpc
 from mpmath import mp
 
@@ -53,7 +55,7 @@ def calc_ab_rungekutta4_vanilla_ap( dx, L, q, zeta, digits=20 ):
        
         a.append( fprod( [ v1[-1] , fexp( fprod([  1.0j , zeta[i] , L]))]))
         b.append( fprod( [ v2[-1] , fexp( fprod([ -1.0j , zeta[i] , L]))]))        
-        ar = [float( "%.15e"%mpmath.re(x)) for x in a]
-        ai = [float( "%.15e"%mpmath.im(x)) for x in a]
+        ar = [float( "%.15e"%mpmre(x)) for x in a]
+        ai = [float( "%.15e"%mpmim(x)) for x in a]
         
     return np.array( ar) + 1.0j * np.array(ai) , np.array( b)
