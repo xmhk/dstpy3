@@ -1,6 +1,6 @@
 import numpy as np
-from dstpy_cythonloops_wrapper import *
-from dstpy_vanilla_algos import *
+
+
 import numpy.linalg as linalg
 from scipy.linalg import toeplitz
 
@@ -22,6 +22,96 @@ from scipy.linalg import toeplitz
 #											 Information Transmission using the Nonlinear Fourier Transform, Part III
 #											 http://arxiv.org/abs/1302.2875
 #
+
+
+ab_methodsdict = {}
+ab_methodnamesdict = {}									   
+										  
+										  
+#
+# import vanilla algos
+#
+from .dstpy_vanilla_algos import *	 # those should work when numpy + scipy is present
+
+
+ab_methodsdict = {
+					'TM'   : calc_ab_transfermatrix_vanilla,
+					'CD'   : calc_ab_centraldifference_vanilla,
+					'CN'   : calc_ab_cranknicolson_vanilla,
+					'AL'   : calc_ab_ablowitzladik_vanilla,
+					'AL2'  : calc_ab_ablowitzladik2_vanilla,
+					'FD'   : calc_ab_forwarddisc_vanilla,					
+					'RK4'  : calc_ab_rungekutta4_vanilla, 
+									
+									}		
+											
+ab_methodnamesdict =	 {
+					'TM'	 : 'Transfer Matrix (Python)',
+					'CD'	 : 'Central Discretization (Python)',
+					'CN'	 : 'Crank Nicolson (Python)',
+					'AL'	 : 'Ablowitz Ladik (Python)',
+					'AL2'	 : 'Ablowitz Ladik Norm (Python)',
+					'FD'	 : 'Forward Discretization (Python)',
+					'RK4'	 : 'Runge-Kutta 4 (Python)',
+									}	  
+
+									
+abdiff_methodsdict = {'AL'	 : calc_ab_diff_ablowitzladik_vanilla}
+abdiff_methodnamesdict = { 'AL'	 : 'Ablowitz Ladik (Python)'}
+											
+#
+# import arbitrary precision version. Import Errors occur when mpmath module is not installed
+#
+
+try:
+	from .dstpy_arbprec_mpc import *
+	ab_methodsdict['RK4_APV'] = calc_ab_rungekutta4_vanilla_ap
+	ab_methodnamesdict['RK4_APV'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"	 
+except ImportError:
+	print("Warning: Problems with arbitray precision module ...")
+
+#
+# import cython loops: possibly need to be compiled on every machine. Look in DSTcython folder
+#	
+
+ 
+try:
+	from .dstpy_cythonloops_wrapper import *
+	ab_methodsdict['TMC'] = calc_ab_transfermatrix_clib
+	ab_methodsdict['FDC'] = calc_ab_forwarddisc_clib
+	ab_methodsdict['RK4C'] =calc_ab_rungekutta4_clib	
+	ab_methodnamesdict['TMC'] = 'Transfer Matrix (C)'
+	ab_methodnamesdict['FDC'] = 'Forward Discretization (C)'
+	ab_methodnamesdict['RK4C'] = 'Runge-Kutta 4 (C)'
+	abdiff_methodsdict['ALC'] = calc_al_diff_clib
+	abdiff_methodnamesdict['ALC'] = 'Ablowitz Ladik (C)'
+	
+except ImportError:
+	print("Warning: Problems with cython loops module ...")
+	
+	
+#
+# import fortran loops: possibly need to be compiled on every machine. Look in DSTfortran folder
+#	 
+try:
+	from .dstpy_fortran_wrapper import *
+	ab_methodsdict['RK4F'] = calc_ab_rungekutta4_flib
+	ab_methodnamesdict['RK4F'] = 'RK4 (Fortran)'
+	
+except ImportError:
+	print("Warning: Problems with fortran  loops module ...")	 
+
+def dstinfo():
+    print("calc_ab methods available:")		
+    for k in ab_methodsdict:
+        print("- %s : %s"%(k, ab_methodnamesdict[k]))
+        
+    print("\n\ncalc_abdiff methods available:")	
+    for k in abdiff_methodsdict:
+        print("- %s : %s"%(k, abdiff_methodnamesdict[k]))		
+
+    print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
+
 
 class DSTObj():
 	def __init__(self, field, tvec, fiberbeta2, gamm, t0scaleext = None):
@@ -45,59 +135,10 @@ class DSTObj():
 		self.scaled_dom = np.pi / (2 * self.L)
 		self.ommax = np.floor( npoints / 2. ) * self.scaled_dom
 		
-		self.calc_ab_methodsdict = {'TMC'  : calc_ab_transfermatrix_clib,
-									'TM'   : calc_ab_transfermatrix_vanilla,
-									'CD'   : calc_ab_centraldifference_vanilla,
-									'CN'   : calc_ab_cranknicolson_vanilla,
-									'AL'   : calc_ab_ablowitzladik_vanilla,
-									'AL2'  : calc_ab_ablowitzladik2_vanilla,
-									'FD'   : calc_ab_forwarddisc_vanilla,
-									'FDC'  : calc_ab_forwarddisc_clib,
-									'RK4'  : calc_ab_rungekutta4_vanilla, 
-									'RK4C' : calc_ab_rungekutta4_clib
-									}		
-											
-		self.calc_ab_methodnamesdict =	 {'TMC'	 : 'Transfer Matrix (C)',
-										  'TM'	 : 'Transfer Matrix (Python)',
-										  'CD'	 : 'Central Discretization (Python)',
-										  'CN'	 : 'Crank Nicolson (Python)',
-										  'AL'	 : 'Ablowitz Ladik (Python)',
-										  'AL2'	 : 'Ablowitz Ladik Norm (Python)',
-										  'FD'	 : 'Forward Discretization (Python)',										  
-										  'FDC'	 : 'Forward Discretization (C)', 
-										  'RK4'	 : 'Runge-Kutta 4 (Python)',
-										  'RK4C' : 'Runge-Kutta 4 (Python)'}
-										  
-		self.calc_abdiff_methodsdict = {#'TMC'	 : calc_ab_diff_transfermatrix_clib,	# commented versions only exists as scratch
-										#'FDC'	 : calc_ab_diff_forwarddiff_clib,
-										#'RK4C'	 : calc_ab_diff_rk4_clib,
-										#'RK4'	 :	calc_abdiff_rungekutta_vanilla,
-										#'FD'	 : calc_ab_diff_forwarddisc_vanilla,
-										'AL'	 : calc_ab_diff_ablowitzladik_vanilla,
-										'ALC'	 : calc_al_diff_clib}
-										
-		self.calc_abdiff_methodnamesdict = {#'TMC' : 'Transfer Matrix (C)',
-											#'FDC' : 'Forward Discretization (C)',
-											#'FD'  : 'Forward Discretization (Python)',
-											 'AL'  : 'Ablowitz Ladik (Python)',
-											'ALC'  : 'Ablowitz Ladik (C)',
-											#'RK4C' : 'Runge Kutta 4 (C)',
-											#'RK4' : 'Runge Kutta 4 (Python)'
-											}		
-
-												
-										  
-										  
-	def	 help(self):
-		print("calc_ab methods available:")		
-		for k in self.calc_ab_methodsdict:
-			print("							  %s : %s"%(k, self.calc_ab_methodnamesdict[k]))
-			
-		print("\n\ncalc_abdiff methods available:")	
-		for k in self.calc_abdiff_methodsdict:
-			print("							  %s : %s"%(k, self.calc_abdiff_methodnamesdict[k]))		
-
-		print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
+		self.calc_ab_methodsdict = ab_methodsdict					
+		self.calc_ab_methodnamesdict =	ab_methodnamesdict
+		self.calc_abdiff_methodsdict =abdiff_methodsdict 
+		self.calc_abdiff_methodnamesdict =abdiff_methodnamesdict														
 	
 	
 	def calc_ab(self,zetas, method = 'TMC'):
