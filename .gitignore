@@ -6,6 +6,8 @@
 *.obj
 .ipython_checkpoints
 depricated_libdst3
+kompilierte_version_winpy344
+f2py.py
 __pycache__
 *.c
 
