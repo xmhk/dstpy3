@@ -1,6 +1,6 @@
 import numpy as np
 
-from .DSTfortran import dstloopsfortran #as DD#import loopf, loopf_diff
+from .DSTfortran import dstloopsfortran 
 
 
 
