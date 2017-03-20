@@ -23,6 +23,40 @@ def calc_ab_rungekutta4_vanilla( dx, L, q, zeta ):
         a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
         b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
     return a, b
+    
+def calc_ab_diff_rk4_vanilla2( dx, L, q, zeta ):
+    def fpk( qii, zetai): # use this matrix to integrate v and v' at once
+        return np.array( [[ -1.0j * zetai      ,  qii               , 0                ,     0 ],
+                          [1.0* -np.conj(qii)   ,  1.0j * zetai     , 0                ,     0  ],
+                          [ -1.0j                ,   0                 ,  -1.0j * zetai ,   qii ] ,
+                          [0                     ,    1.0j             ,  1.0* -np.conj(qii) ,   1.0j * zetai]]
+                         )
+    
+    a=np.zeros(len(zeta), dtype=complex)
+    b=np.zeros(len(zeta), dtype=complex)
+    adiff=np.zeros(len(zeta), dtype=complex)
+    bdiff=np.zeros(len(zeta), dtype=complex)
+    
+    for i in range(len(zeta)):        
+        v = np.zeros([len(q),4],dtype=complex)
+        
+        #calculate the first two elements of v
+        v[0,0] =               np.exp( -1.0j * zeta[i] * -L)   
+        v[0,2] =  -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
+        p0 = fpk( q[0], zeta[i])
+        v[1,:] = v[0,:] + dx * np.dot(p0, v[0,:])       
+        
+        for ii in range(0,len(q)-2):
+            k1 = np.dot( fpk( q[ii], zeta[i]) , v[ii])
+            k2 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k1)
+            k3 = np.dot( fpk( q[ii+1], zeta[i]), v[ii] + dx * k2)
+            k4 = np.dot( fpk( q[ii+2], zeta[i]), v[ii] + 2 * dx *k3)           
+            v[ii+2,:] = v[ii,:] + 2 * dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)         
+        a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)                
+        b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+        adiff[i] = (v[-1,2] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+        bdiff[i] = np.array([0])  #not calculated yet
+    return a, b, adiff, bdiff    
 
 def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	i =0

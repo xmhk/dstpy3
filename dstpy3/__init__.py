@@ -58,7 +58,8 @@ ab_methodnamesdict =	 {
 									
 abdiff_methodsdict = {'AL'	 : calc_ab_diff_ablowitzladik_vanilla}
 abdiff_methodnamesdict = { 'AL'	 : 'Ablowitz Ladik (Python)'}
-											
+abdiff_methodsdict['RK4'] =  calc_ab_diff_rk4_vanilla2
+abdiff_methodnamesdict['RK4']= 'Runge-Kutta 4  (Python)'											
 #
 # import arbitrary precision version. Import Errors occur when mpmath module is not installed
 #
@@ -97,20 +98,22 @@ try:
 	from .dstpy_fortran_wrapper import *
 	ab_methodsdict['RK4F'] = calc_ab_rungekutta4_flib
 	ab_methodnamesdict['RK4F'] = 'RK4 (Fortran)'
+	abdiff_methodsdict['RK4F'] = calc_abdiff_rungekutta4_flib
+	abdiff_methodnamesdict['RK4F'] = 'Runge-Kutta 4 (Fortran)'
 	
 except ImportError:
 	print("Warning: Problems with fortran  loops module ...")	 
 
 def dstinfo():
-    print("calc_ab methods available:")		
-    for k in ab_methodsdict:
-        print("- %s : %s"%(k, ab_methodnamesdict[k]))
-        
-    print("\n\ncalc_abdiff methods available:")	
-    for k in abdiff_methodsdict:
-        print("- %s : %s"%(k, abdiff_methodnamesdict[k]))		
+	print("calc_ab methods available:")		
+	for k in ab_methodsdict:
+		print("- %s : %s"%(k, ab_methodnamesdict[k]))
+		
+	print("\n\ncalc_abdiff methods available:")	
+	for k in abdiff_methodsdict:
+		print("- %s : %s"%(k, abdiff_methodnamesdict[k]))		
 
-    print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
+	print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
 
 
 class DSTObj():
@@ -304,29 +307,4 @@ class DSTObj():
 			matrixA[M:2*M,M:2*M] = -1 * Omega
 			evals, evecs = linalg.eig(matrixA)
 			return evals	
-			
-		def calc_evals_spec2(self, muk = .0):  # Ver 18.08. 17:00
-			#matrix spectral method after YANG
-			# from scipy.linalg import toeplitz
-			qft	  = np.fft.fftshift( np.fft.ifft(self.q) )
-			M	  = len(self.q)
-			M2	  = int( M/2.0)
-			k = 2 * np.pi / 2/ self.L  
-			
-			B1 = 1.0j * k *	 np.diag(np.arange( -M2, M2)) + muk * k * np.identity(M)	
-			
-			toepcv = np.zeros( M )
-			toeprv = np.zeros( M )
-			toepcv[0:M2] = qft[M2:M]
-			toeprv[0:M2] = qft[M2:0:-1]
-			B2 = toeplitz( toepcv, toeprv)
-			MM = np.zeros( [2 * M, 2*M], dtype=complex)
-			MM[0:M, 0:M] = -B1
-			MM[0:M, M:2*M] = B2
-			MM[M:2*M, 0:M] = np.conj(np.transpose(B2))
-			MM[M:2*M,M:2*M] = B1
-			evals, evec = np.linalg.eig( -1.0j * MM)
-			return evals
-
-			"""	
-
+			"""

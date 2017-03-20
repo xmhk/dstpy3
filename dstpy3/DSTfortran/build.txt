@@ -1,1 +1,7 @@
-f2py -c dstloopfortran.f90 -m fortranloops
+python dstloopsfortran_setup.py build_ext --inplace
+
+
+
+alternative: 
+f2py -c -m dstloopsfort dstloopsfortran.f90   
+BUT you may adjust ../dstpy_fortran_wrapper.py

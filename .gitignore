@@ -10,7 +10,14 @@ kompilierte_version_winpy344
 f2py.py
 __pycache__
 *.c
+*.def
+*.o
+*.h
+*.mod
 
+DSTcython/build/*
+DSTfortran/build/*
+*.pyd
 
 # Windows image file caches
 
@@ -31,6 +38,8 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
 
 # =========================
 # Operating System Files
@@ -63,5 +72,6 @@ Temporary Items
 *.ipynb
 .ipynb_checkpoints/DST3_tests-checkpoint.ipynb
 *.pyc
+
 __pycache__/dstpy_cythonloops_wrapper.cpython-35.pyc
 DST3_tests.ipynb
