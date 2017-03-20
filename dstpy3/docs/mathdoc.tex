@@ -1,0 +1,71 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\begin{document}
+
+\section{Introduction}
+The programms contained in 'dstpy3' package can be used to calculate the direct scattering transform for the nonlinear Schr\"odinger equation.
+For extensive description, see the papers 
+\begin{itemize}
+\item G. Boffetta and A. R. Osborne:	 Computation of the Direct Scattering Transform for the Nonlineare Schroedinger Equation, Journal of Comp. Phys. {\bf 102}, p 252-264, (1992)	  \\
+\url{http://personalpages.to.infn.it/~boffetta/Papers/bo92.pdf}
+
+\item Mansoor I. Yousefi, Frank R. Kschischang:	 
+\begin{itemize}
+   \item Information Transmission using the Nonlinear Fourier Transform, Part I
+										 \url{https://arxiv.org/abs/1202.3653}
+%# 
+		\item Information Transmission using the Nonlinear Fourier Transform, Part II
+											 \url{https://arxiv.org/abs/1204.0830}
+%#
+%#
+\item 											 Information Transmission using the Nonlinear Fourier Transform, Part III
+											 \url{https://arxiv.org/abs/1302.2875}
+\end{itemize}
+\end{itemize}
+
+\section{What the algorithms \textit{should} do}
+For a given field, the direct scattering transform shall be calculated. 
+The problem can be formulated as eigenvalue problem
+$$ v_t = \left(\begin{array}{cc}-j\lambda & q(x)\\-q^*(x) & j\lambda\end{array}\right)v $$
+with the eigenvalue $\lambda$.
+Assuming the normalized time and field vectors  $q(x)$ and $x$ are present in discretized form. For an eigenvalue candidate $\zeta$,   $v$ can be calculated  by integration:
+\begin{align}v[k+1] &= v[k] + {\rm d}x \cdot P[k] v[k] \end{align}
+with
+\begin{align}P[k] = \left( \begin{array}{cc}-j\zeta&q[k]\\-q^*[k]&j\zeta\end{array} \right )
+\end{align}
+and the starting value 
+\begin{align} 
+v[0] = \left( \begin{array}{c}\exp( j  \zeta\, x_{\rm max}) \\ 0 \end{array} \right) \quad .
+\end{align}
+The scattering coefficients $a(\zeta)$ and $b(\zeta)$ then can be calculated from $v$:
+\begin{align}
+a(\zeta) &= v_1(x_{\rm max})\exp(j\zeta \cdot x_{\rm max})\\
+b(\zeta) &= v_2(x_{\rm max})\exp(-j\zeta \cdot  x_{\rm max})
+\end{align}
+The candidate $\zeta$ can is an eigenvalue, when $a(\zeta) = 0$ (or very small, when performing the integration numerically).
+
+For root finding, it is desirable to have the derivative of $a$. To do this, one needs to calculate 
+\begin{align}
+\frac{{\rm d}a}{{\rm d}\zeta} = -j x_{\rm max} \exp(-j\zeta \cdot x_{\rm max}) \cdot v_1'(\zeta) \quad .
+\end{align}
+The derivative of $v$ with respect to $\zeta$ is $v'$, which can be integrated with
+\begin{align}
+v'[k+1] = v'[k] + {\rm d}x \left( P'[k] v[k]  + P[k] v'[k] \right)
+\end{align}
+and the initial value
+\begin{align}
+v'[0] &=  \left( \begin{array}{c}jx_{\rm max}  \exp(j  \zeta \cdot  x_{\rm max}) \\ 0 \end{array} \right) \quad .
+\end{align}
+From this, one gets
+\begin{align}
+a'(\zeta) & = (v'_1(x_{\rm max}) + jx_{\rm max}\cdot v_1(x_{\rm max}))\exp(j\zeta \cdot x_{\rm max}) \quad .
+\end{align}
+To simultaneously integrate $v$ and $v'$, one can solve 
+\begin{align}
+\left( \begin{array}{c}v[k+1]\\v'[k+1] \end{array} \right) = \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) + {\rm d}x \cdot \left( \begin{array}{cc}P[k]& 0 \\ P[k] & P'[k] \end{array} \right)  \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) \quad .
+\end{align}
+
+To find some eigenvalue with $a(\lambda)=0$ from a starting value $\zeta$, one can follow the root-finding procedure: 
+\begin{align} \zeta_{k+1} &= \zeta_k -  \frac{ a(\zeta_k)}{a'(\zeta_k)}\end{align}
+\end{document}
