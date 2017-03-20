@@ -63,7 +63,7 @@ a'(\zeta) & = (v'_1(x_{\rm max}) + jx_{\rm max}\cdot v_1(x_{\rm max}))\exp(j\zet
 \end{align}
 To simultaneously integrate $v$ and $v'$, one can solve 
 \begin{align}
-\left( \begin{array}{c}v[k+1]\\v'[k+1] \end{array} \right) = \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) + {\rm d}x \cdot \left( \begin{array}{cc}P[k]& 0 \\ P[k] & P'[k] \end{array} \right)  \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) \quad .
+\left( \begin{array}{c}v[k+1]\\v'[k+1] \end{array} \right) = \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) + {\rm d}x \cdot \left( \begin{array}{cc}P[k]& 0 \\ P'[k] & P[k] \end{array} \right)  \left( \begin{array}{c}v[k]\\v'[k] \end{array} \right) \quad .
 \end{align}
 
 To find some eigenvalue with $a(\lambda)=0$ from a starting value $\zeta$, one can follow the root-finding procedure: 

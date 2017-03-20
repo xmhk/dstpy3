@@ -65,9 +65,14 @@ abdiff_methodnamesdict['RK4']= 'Runge-Kutta 4  (Python)'
 #
 
 try:
-	from .dstpy_arbprec_mpc import *
-	ab_methodsdict['RK4_APV'] = calc_ab_rungekutta4_vanilla_ap
-	ab_methodnamesdict['RK4_APV'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"	 
+    from .dstpy_arbprec_mpc import *
+    ab_methodsdict['RK4_AP'] = calc_ab_rungekutta4_vanilla_ap
+    ab_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"
+    
+    abdiff_methodsdict['RK4_AP'] = calc_abdiff_rungekutta4_vanilla_ap
+    abdiff_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"	 
+    
+    
 except ImportError:
 	print("Warning: Problems with arbitray precision module ...")
 
