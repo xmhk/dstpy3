@@ -60,6 +60,8 @@ abdiff_methodsdict = {'AL'	 : calc_ab_diff_ablowitzladik_vanilla}
 abdiff_methodnamesdict = { 'AL'	 : 'Ablowitz Ladik (Python)'}
 abdiff_methodsdict['RK4'] =  calc_ab_diff_rk4_vanilla2
 abdiff_methodnamesdict['RK4']= 'Runge-Kutta 4  (Python)'
+abdiff_methodsdict['TM'] =  calc_abdiff_transfermatrix_vanilla
+abdiff_methodnamesdict['TM']= 'Transfer Matrix (Python)'
 #
 # import arbitrary precision version. Import Errors occur when mpmath module is not installed
 #

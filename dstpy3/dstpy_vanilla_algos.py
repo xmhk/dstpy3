@@ -97,6 +97,61 @@ def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 		b[i] = S[1,0]
 		i+=1
 	return a,b
+    
+def calc_abdiff_transfermatrix_vanilla( dx, L, q, zeta ):
+    a=np.zeros(len(zeta), dtype=np.complex)
+    b=np.zeros(len(zeta), dtype=np.complex)
+    ad=np.zeros(len(zeta), dtype=np.complex)
+    bd=np.zeros(len(zeta), dtype=np.complex)    
+    T = np.zeros( [4,4], dtype = np.complex)  
+    
+    zzet, qq = np.meshgrid(zeta,q)
+    kk=np.sqrt( -np.abs(qq)**2 - zzet**2+0.0j)
+    coshkdxm = np.cosh(kk*dx)
+    sinhkdxm = np.sinh(kk*dx)
+    UU00 = coshkdxm - 1.0j*zzet / kk * sinhkdxm
+    UU01 = qq/kk * sinhkdxm
+    UU10 = -1.0 * np.conj(qq) / kk * sinhkdxm
+    UU11 = coshkdxm + 1.0j* zzet / kk * sinhkdxm
+    
+    UD00 = 1.0j * dx * zzet**2 / kk**2 * coshkdxm \
+           -(zzet * dx + 1.0j + 1.0j * zzet**2/kk**2) * sinhkdxm/kk
+    UD01 = -1 * qq * zzet / kk**2 * (dx * coshkdxm - sinhkdxm/kk)
+    UD10 = -1 * -1 * np.conj(qq) * zzet / kk**2 *(dx * coshkdxm - sinhkdxm/kk)
+    UD11 =  -1.0j * dx * zzet**2 / kk**2 * coshkdxm \
+           -(zzet * dx - 1.0j - 1.0j * zzet**2/kk**2) * sinhkdxm/kk
+    i=0
+    while i <len(zeta):      
+        S = np.zeros( [4,4], dtype = np.complex)
+        S[0,0] = 1.0
+        S[1,1] = 1.0
+        S[2,2] = 1.0
+        S[3,3] = 1.0
+        ii = len(q)-1
+        while ii>=0:  
+            T[0,0] = UU00[ii,i]
+            T[0,1] = UU01[ii,i]
+            T[1,0] = UU10[ii,i]
+            T[1,1] = UU11[ii,i]
+            
+            T[2,2] = UU00[ii,i]
+            T[2,3] = UU01[ii,i]
+            T[3,2] = UU10[ii,i]
+            T[3,3] = UU11[ii,i]
+            
+            T[2,0] = UD00[ii,i]
+            T[2,1] = UD01[ii,i]
+            T[3,0] = UD10[ii,i]
+            T[3,1] = UD11[ii,i]
+            S = np.dot(S, T)
+            ii=ii-1
+        a[i]=S[0,0] * np.exp ( 2.0j * zeta[i] * L)
+        b[i]=S[1,0]
+        ad[i] = ( S[2,0] + 1.0j * L *(S[0,0] + S[2,2]) )* np.exp(2.0j * zeta[i] * L)
+        bd[i] = S[3,0] + 1.0j * L * (S[3,2]-S[1,0])       
+        i=i+1        
+    return a, b, ad, bd
+
 
 def calc_ab_centraldifference_vanilla( dx, L, q, zeta ):
 	a=np.zeros(len(zeta), dtype=complex)
