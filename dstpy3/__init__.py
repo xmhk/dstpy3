@@ -115,17 +115,28 @@ try:
 	abdiff_methodsdict['RK4FQ'] = calc_abdiff_rungekutta4_flib_qp
 	abdiff_methodnamesdict['RK4FQ'] = 'Runge-Kutta 4 (Fortran, quad)'
 
+	ab_methodsdict['TMF'] = calc_ab_tm_flib
+	ab_methodnamesdict['TMF'] = 'TM (Fortran)'
+	abdiff_methodsdict['TMF'] = calc_abdiff_tm_flib
+	abdiff_methodnamesdict['TMF'] = 'Runge-Kutta 4 (Fortran)'
+	ab_methodsdict['TMFQ'] = calc_ab_tm_flib_qp
+	ab_methodnamesdict['TMFQ'] = 'TM (Fortran, quad)'
+	abdiff_methodsdict['TMFQ'] = calc_abdiff_tm_flib_qp
+	abdiff_methodnamesdict['TMFQ'] = 'Runge-Kutta 4 (Fortran, quad)'
+
 
 except ImportError:
 	print("Warning: Problems with fortran  loops module ...")
 
 def dstinfo():
 	print("calc_ab methods available:")
-	for k in ab_methodsdict:
+	#for k in ab_methodsdict.keys().sort():
+	for k in sorted(ab_methodnamesdict.keys()):
 		print("- %s : %s"%(k, ab_methodnamesdict[k]))
 
 	print("\n\ncalc_abdiff methods available:")
-	for k in abdiff_methodsdict:
+	#for k in abdiff_methodsdict:
+	for k in sorted(abdiff_methodnamesdict.keys()):
 		print("- %s : %s"%(k, abdiff_methodnamesdict[k]))
 
 	print("\neigenvalue calculation: use .calc_evals() / .calc_evals_spec() BUT this is slow and buggy.")
