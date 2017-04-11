@@ -3,6 +3,93 @@ module dstloopsfort
 contains
 
 
+
+
+
+  ! ---------------------------------------------------------------------------------
+  !
+  !   Ablowitz-Ladik algos with derivatives
+  !
+  ! ---------------------------------------------------------------------------------
+
+
+    subroutine loopf_al_diff( dx, l, q, zeta, lq, lzeta, adash, bdash, addash, bddash )
+      implicit none
+      integer, parameter :: hprec = 8
+      complex(kind=hprec)  ::  plusi = cmplx(  0.0,   1.0)
+      complex(kind=hprec)  :: minusi = cmplx(  0.0, - 1.0)
+      complex(kind=hprec)  :: minus1 = cmplx( -1.0,   0.0)
+      complex(kind=hprec)  ::  plus1 = cmplx(  1.0,   0.0)
+      complex(kind=hprec)  ::    nll = cmplx(  0.0,   0.0)
+      complex(kind=hprec), dimension(4,4) :: Am(4,4)
+      real(kind=8) :: dx, l
+      integer :: i,ii, lzeta, lq
+      complex(kind=8) ::q(:), adash(:), bdash(:), addash(:), bddash(:),zeta(:)
+      complex(kind=hprec) :: z
+      complex(kind=hprec), dimension(:,:), allocatable :: v(:,:)
+      Am = reshape( (/nll, nll, nll,nll, nll, nll, nll,nll, nll, nll, nll,nll, nll, nll, nll,nll /),(/4,4/))
+      allocate(v( 0:lq, 4))
+      do i=1,lzeta
+          v(1,1) =             exp( plusi * zeta(i) * l);
+          v(1,2) = nll
+          v(1,3) = plusi * l * exp( plusi * zeta(i) * l);
+          v(1,4) = nll
+          z = exp( minusi * zeta(i) * dx)
+          Am(1,1) = z; Am(2,2) = plus1/z; Am(3,3) = z; Am(4,4) = plus1/z
+          Am(3,1) = minusi * z * dx ;   Am(4,2) = plusi / z * dx
+          do ii = 1, lq-1
+            Am(1,2) = q(ii) * dx;                  Am(3,4) = q(ii) * dx
+            Am(2,1) = minus1 * conjg(q(ii)) * dx;  Am(4,3) = minus1 * conjg(q(ii)) * dx;
+            !v(ii+1,:) =plus1/ sqrt(plus1+ abs(q(ii)*dx)**2)* matmul( Am, v(ii,:))            
+            v(ii+1,:) = matmul( Am, v(ii,:))
+          end do          
+          adash(i) = v(ii,1) * exp(plusi * zeta(i) * l)
+          bdash(i) = v(ii,2) * exp(minusi * zeta(i) * l)
+          addash(i) = (v(ii,3) + plusi * l * v(ii,1)) * exp(plusi* zeta(i) *l)
+          bddash(i) = nll
+      end do 
+      deallocate(v)
+    end subroutine loopf_al_diff
+    
+  subroutine loopf_al2_diff( dx, l, q, zeta, lq, lzeta, adash, bdash, addash, bddash )
+      implicit none
+      integer, parameter :: hprec = 8
+      complex(kind=hprec)  ::  plusi = cmplx(  0.0,   1.0)
+      complex(kind=hprec)  :: minusi = cmplx(  0.0, - 1.0)
+      complex(kind=hprec)  :: minus1 = cmplx( -1.0,   0.0)
+      complex(kind=hprec)  ::  plus1 = cmplx(  1.0,   0.0)
+      complex(kind=hprec)  ::    nll = cmplx(  0.0,   0.0)
+      complex(kind=hprec), dimension(4,4) :: Am(4,4)
+      real(kind=8) :: dx, l
+      integer :: i,ii, lzeta, lq
+      complex(kind=8) ::q(:), adash(:), bdash(:), addash(:), bddash(:),zeta(:)
+      complex(kind=hprec) :: z
+      complex(kind=hprec), dimension(:,:), allocatable :: v(:,:)
+      Am = reshape( (/nll, nll, nll,nll, nll, nll, nll,nll, nll, nll, nll,nll, nll, nll, nll,nll /),(/4,4/))
+      allocate(v( 0:lq, 4))
+      do i=1,lzeta
+          v(1,1) =             exp( plusi * zeta(i) * l);
+          v(1,2) = nll
+          v(1,3) = plusi * l * exp( plusi * zeta(i) * l);
+          v(1,4) = nll
+          z = exp( minusi * zeta(i) * dx)
+          Am(1,1) = z; Am(2,2) = plus1/z; Am(3,3) = z; Am(4,4) = plus1/z
+          Am(3,1) = minusi * z * dx ;   Am(4,2) = plusi / z * dx
+          do ii = 1, lq-1
+            Am(1,2) = q(ii) * dx;                  Am(3,4) = q(ii) * dx
+            Am(2,1) = minus1 * conjg(q(ii)) * dx;  Am(4,3) = minus1 * conjg(q(ii)) * dx;
+            v(ii+1,:) =plus1/ sqrt(plus1+ abs(q(ii)*dx)**2)* matmul( Am, v(ii,:))            
+          end do          
+          adash(i) = v(ii,1) * exp(plusi * zeta(i) * l)
+          bdash(i) = v(ii,2) * exp(minusi * zeta(i) * l)
+          addash(i) = (v(ii,3) + plusi * l * v(ii,1)) * exp(plusi* zeta(i) *l)
+          bddash(i) = nll
+      end do 
+      deallocate(v)
+    end subroutine loopf_al2_diff
+
+
+
   ! ---------------------------------------------------------------------------------
   !
   !   RK4 algos with and without derivatives

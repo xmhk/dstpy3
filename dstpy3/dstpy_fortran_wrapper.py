@@ -70,3 +70,21 @@ def calc_abdiff_tm_flib_qp( dx, L, q, zeta ):
     bdiff=np.zeros(len(zeta), dtype=complex)
     dstloopsfortran.dstloopsfort.loopf_tm_diff_quad( dx, L, q, zeta, len(q), len(zeta), a, b, adiff, bdiff)
     return a, b, adiff, bdiff
+    
+    
+def calc_abdiff_al_flib( dx, L, q, zeta ):
+    a=np.zeros(len(zeta), dtype=complex)
+    b=np.zeros(len(zeta), dtype=complex)
+    adiff=np.zeros(len(zeta), dtype=complex)
+    bdiff=np.zeros(len(zeta), dtype=complex)
+    dstloopsfortran.dstloopsfort.loopf_al_diff( dx, L, q, zeta, len(q), len(zeta), a, b, adiff, bdiff)
+    return a, b, adiff, bdiff
+
+def calc_abdiff_al2_flib( dx, L, q, zeta ):
+    a=np.zeros(len(zeta), dtype=complex)
+    b=np.zeros(len(zeta), dtype=complex)
+    adiff=np.zeros(len(zeta), dtype=complex)
+    bdiff=np.zeros(len(zeta), dtype=complex)
+    dstloopsfortran.dstloopsfort.loopf_al2_diff( dx, L, q, zeta, len(q), len(zeta), a, b, adiff, bdiff)
+    return a, b, adiff, bdiff    
+    

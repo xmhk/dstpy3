@@ -58,47 +58,47 @@ ab_methodnamesdict =	 {
 
 abdiff_methodsdict = {'AL'	 : calc_ab_diff_ablowitzladik_vanilla}
 abdiff_methodnamesdict = { 'AL'	 : 'Ablowitz Ladik (Python)'}
-abdiff_methodsdict['RK4'] =  calc_ab_diff_rk4_vanilla2
+abdiff_methodsdict = {'AL2'	 : calc_ab_diff_ablowitzladik2_vanilla}
+abdiff_methodnamesdict = { 'AL2'	 : 'Ablowitz Ladik2 (Python)'}
+abdiff_methodsdict['RK4'] =	 calc_ab_diff_rk4_vanilla2
 abdiff_methodnamesdict['RK4']= 'Runge-Kutta 4  (Python)'
-abdiff_methodsdict['TM'] =  calc_abdiff_transfermatrix_vanilla
+abdiff_methodsdict['TM'] =	calc_abdiff_transfermatrix_vanilla
 abdiff_methodnamesdict['TM']= 'Transfer Matrix (Python)'
+
+
 #
 # import arbitrary precision version. Import Errors occur when mpmath module is not installed
 #
-
 try:
-    from .dstpy_arbprec_mpc import *
-    ab_methodsdict['RK4_AP'] = calc_ab_rungekutta4_vanilla_ap
-    ab_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"
-
-    abdiff_methodsdict['RK4_AP'] = calc_abdiff_rungekutta4_vanilla_ap
-    abdiff_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"
+	from .dstpy_arbprec_mpc import *
+	ab_methodsdict['RK4_AP'] = calc_ab_rungekutta4_vanilla_ap
+	ab_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"
+	abdiff_methodsdict['RK4_AP'] = calc_abdiff_rungekutta4_vanilla_ap
+	abdiff_methodnamesdict['RK4_AP'] = "Runge Kutta 4 (Python, arbitray precision), Warning: SLOW!!!"
 
 
 except ImportError:
 	print("Warning: Problems with arbitray precision module ...")
 
+# depricated
 #
 # import cython loops: possibly need to be compiled on every machine. Look in DSTcython folder
 #
+#try:
+#	from .dstpy_cythonloops_wrapper import *
+#	ab_methodsdict['TMC'] = calc_ab_transfermatrix_clib
+#	ab_methodsdict['FDC'] = calc_ab_forwarddisc_clib
+#	ab_methodsdict['RK4C'] =calc_ab_rungekutta4_clib
+#	ab_methodnamesdict['TMC'] = 'Transfer Matrix (C)'
+#	ab_methodnamesdict['FDC'] = 'Forward Discretization (C)'
+#	ab_methodnamesdict['RK4C'] = 'Runge-Kutta 4 (C)'
+#	abdiff_methodsdict['ALC'] = calc_al_diff_clib
+#	abdiff_methodnamesdict['ALC'] = 'Ablowitz Ladik (C)'
+#	abdiff_methodsdict['RK4C'] = calc_ab_diff_rungekutta4_clib
+#	abdiff_methodnamesdict['RK4C'] = 'Runge Kutta 4 (C)'
+#except ImportError:
+#	print("Warning: Problems with cython loops module ...")
 
-
-try:
-	from .dstpy_cythonloops_wrapper import *
-	ab_methodsdict['TMC'] = calc_ab_transfermatrix_clib
-	ab_methodsdict['FDC'] = calc_ab_forwarddisc_clib
-	ab_methodsdict['RK4C'] =calc_ab_rungekutta4_clib
-	ab_methodnamesdict['TMC'] = 'Transfer Matrix (C)'
-	ab_methodnamesdict['FDC'] = 'Forward Discretization (C)'
-	ab_methodnamesdict['RK4C'] = 'Runge-Kutta 4 (C)'
-	abdiff_methodsdict['ALC'] = calc_al_diff_clib
-	abdiff_methodnamesdict['ALC'] = 'Ablowitz Ladik (C)'
-	abdiff_methodsdict['RK4C'] = calc_ab_diff_rungekutta4_clib
-	abdiff_methodnamesdict['RK4C'] = 'Runge Kutta 4 (C)'
-
-
-except ImportError:
-	print("Warning: Problems with cython loops module ...")
 
 
 #
@@ -124,7 +124,13 @@ try:
 	abdiff_methodsdict['TMFQ'] = calc_abdiff_tm_flib_qp
 	abdiff_methodnamesdict['TMFQ'] = 'Runge-Kutta 4 (Fortran, quad)'
 
-
+	
+	abdiff_methodsdict['AL'] = calc_abdiff_al_flib
+	abdiff_methodnamesdict['AL'] = 'Ablowitz-Ladik (Fortran)'
+	abdiff_methodsdict['AL'] = calc_abdiff_al2_flib
+	abdiff_methodnamesdict['AL'] = 'Ablowitz-Ladik2 (Fortran)'
+	
+  
 except ImportError:
 	print("Warning: Problems with fortran  loops module ...")
 
