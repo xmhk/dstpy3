@@ -1,59 +1,24 @@
 import numpy as np
 
 def calc_ab_rungekutta4_vanilla( dx, L, q, zeta ):
-    def fpk(qii, zetai):
-            return np.array( [[-1.0j * zetai,          qii],
-			                  [-np.conj(qii), 1.0j * zetai]] )
-    a=np.zeros(len(zeta), dtype=complex)
-    b=np.zeros(len(zeta), dtype=complex)
-    for i in range(len(zeta)):
-        v = np.zeros([len(q),2],dtype=complex)
-        #calculate the first two elements of v
-        v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L)
-        #p0 = np.array( [[-1.0j * zeta[i], q[0]],[-np.conj(q[0]), 1.0j * zeta[i]]] )
-        #v[1,:] = v[0,:] + dx * np.dot(p0, v[0,:])
-
-        for ii in range(0,len(q)-1):
-            fpkqii =  fpk( q[ii], zeta[i])
-            k1 = np.dot( fpkqii, v[ii])
-            k2 = np.dot( fpkqii, v[ii] + dx/2.0 * k1)
-            k3 = np.dot( fpkqii, v[ii] + dx/2.0 * k2)
-            k4 = np.dot( fpkqii, v[ii] + dx *k3)
-            v[ii+1,:] = v[ii,:] +  dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
-        a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
-        b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
-    return a, b
-
-
-def calc_ab_diff_rk4_vanilla2( dx, L, q, zeta ):
-    def fpk( qii, zetai): # use this matrix to integrate v and v' at once
-        return np.array( [[ -1.0j * zetai      ,  qii               , 0                ,     0 ],
-                          [1.0* -np.conj(qii)   ,  1.0j * zetai     , 0                ,     0  ],
-                          [ -1.0j                ,   0                 ,  -1.0j * zetai ,   qii ] ,
-                          [0                     ,    1.0j             ,  1.0* -np.conj(qii) ,   1.0j * zetai]]
-                         )
-
-    a=np.zeros(len(zeta), dtype=complex)
-    b=np.zeros(len(zeta), dtype=complex)
-    adiff=np.zeros(len(zeta), dtype=complex)
-    bdiff=np.zeros(len(zeta), dtype=complex)
-    for i in range(len(zeta)):
-        v = np.zeros([len(q),4],dtype=complex)
-        #calculate the first two elements of v
-        v[0,0] =               np.exp( -1.0j * zeta[i] * -L)
-        v[0,2] =  -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
-        for ii in range(0,len(q)-1):
-            fpkqii =  fpk( q[ii], zeta[i])
-            k1 = np.dot( fpkqii, v[ii])
-            k2 = np.dot( fpkqii, v[ii] + dx/2.0 * k1)
-            k3 = np.dot( fpkqii, v[ii] + dx/2.0 * k2)
-            k4 = np.dot( fpkqii, v[ii] + dx *k3)
-            v[ii+1,:] = v[ii,:] +  dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
-        a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
-        b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
-        adiff[i] = (v[-1,2] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
-        bdiff[i] = np.array([0])  #not calculated yet
-    return a, b, adiff, bdiff
+	def fpk(qii, zetai):
+			return np.array( [[-1.0j * zetai,		   qii],
+							  [-np.conj(qii), 1.0j * zetai]] )
+	a=np.zeros(len(zeta), dtype=complex)
+	b=np.zeros(len(zeta), dtype=complex)
+	for i in range(len(zeta)):
+		v = np.zeros([len(q),2],dtype=complex)		  
+		v[0,:] = np.array([1,0]) * np.exp( -1.0j * zeta[i] * -L)
+		for ii in range(0,len(q)-1):
+			fpkqii =  fpk( q[ii], zeta[i])
+			k1 = np.dot( fpkqii, v[ii])
+			k2 = np.dot( fpkqii, v[ii] + dx/2.0 * k1)
+			k3 = np.dot( fpkqii, v[ii] + dx/2.0 * k2)
+			k4 = np.dot( fpkqii, v[ii] + dx *k3)
+			v[ii+1,:] = v[ii,:] +  dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
+		a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+	return a, b
 
 
 def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
@@ -62,9 +27,6 @@ def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	zetalength = np.shape(zeta)[0]
 	b = np.zeros([len(zeta),1], dtype =np.complex)
 	a = np.zeros([len(zeta),1], dtype =np.complex)
-	#
-	# create zeta x q matrices for speedup
-	#
 	zzet, qq = np.meshgrid(zeta,q)
 	kk=np.sqrt( -np.abs(qq)**2 - zzet**2+0.0j)
 	coshkdxm = np.cosh(kk*dx)
@@ -75,83 +37,22 @@ def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	UU11 = coshkdxm + 1.0j* zzet / kk * sinhkdxm
 	U = np.zeros([2,2], dtype=np.complex)
 	while i<zetalength:
-		#
-		# calc single a,b values for zeta[i]
-		#
-		#U = np.zeros([2,2], dtype=np.complex)
-		S = np.zeros([2,2], dtype=np.complex) #matrix Sigma
+		S = np.zeros([2,2], dtype=np.complex) 
 		S[0,0]=1.0
 		S[1,1]=1.0
-		#
-		# itereate over all q[ii]
-		#
 		ii = qlength-1
 		while ii>=0:
 			U[0,0] = UU00[ii,i]
 			U[0,1] = UU01[ii,i]
 			U[1,0] = UU10[ii,i]
 			U[1,1] = UU11[ii,i]
-			S = np.dot(S, U)	 #this is the bottleneck for speed
+			S = np.dot(S, U)
 			ii=ii-1
 		a[i] = S[0,0] * np.exp( 2.0j * zeta[i] * L)
 		b[i] = S[1,0]
 		i+=1
 	return a,b
-    
-def calc_abdiff_transfermatrix_vanilla( dx, L, q, zeta ):
-    a=np.zeros(len(zeta), dtype=np.complex)
-    b=np.zeros(len(zeta), dtype=np.complex)
-    ad=np.zeros(len(zeta), dtype=np.complex)
-    bd=np.zeros(len(zeta), dtype=np.complex)    
-    T = np.zeros( [4,4], dtype = np.complex)  
-    
-    zzet, qq = np.meshgrid(zeta,q)
-    kk=np.sqrt( -np.abs(qq)**2 - zzet**2+0.0j)
-    coshkdxm = np.cosh(kk*dx)
-    sinhkdxm = np.sinh(kk*dx)
-    UU00 = coshkdxm - 1.0j*zzet / kk * sinhkdxm
-    UU01 = qq/kk * sinhkdxm
-    UU10 = -1.0 * np.conj(qq) / kk * sinhkdxm
-    UU11 = coshkdxm + 1.0j* zzet / kk * sinhkdxm
-    
-    UD00 = 1.0j * dx * zzet**2 / kk**2 * coshkdxm \
-           -(zzet * dx + 1.0j + 1.0j * zzet**2/kk**2) * sinhkdxm/kk
-    UD01 = -1 * qq * zzet / kk**2 * (dx * coshkdxm - sinhkdxm/kk)
-    UD10 = -1 * -1 * np.conj(qq) * zzet / kk**2 *(dx * coshkdxm - sinhkdxm/kk)
-    UD11 =  -1.0j * dx * zzet**2 / kk**2 * coshkdxm \
-           -(zzet * dx - 1.0j - 1.0j * zzet**2/kk**2) * sinhkdxm/kk
-    i=0
-    while i <len(zeta):      
-        S = np.zeros( [4,4], dtype = np.complex)
-        S[0,0] = 1.0
-        S[1,1] = 1.0
-        S[2,2] = 1.0
-        S[3,3] = 1.0
-        ii = len(q)-1
-        while ii>=0:  
-            T[0,0] = UU00[ii,i]
-            T[0,1] = UU01[ii,i]
-            T[1,0] = UU10[ii,i]
-            T[1,1] = UU11[ii,i]
-            
-            T[2,2] = UU00[ii,i]
-            T[2,3] = UU01[ii,i]
-            T[3,2] = UU10[ii,i]
-            T[3,3] = UU11[ii,i]
-            
-            T[2,0] = UD00[ii,i]
-            T[2,1] = UD01[ii,i]
-            T[3,0] = UD10[ii,i]
-            T[3,1] = UD11[ii,i]
-            S = np.dot(S, T)
-            ii=ii-1
-        a[i]=S[0,0] * np.exp ( 2.0j * zeta[i] * L)
-        b[i]=S[1,0]
-        ad[i] = ( S[2,0] + 1.0j * L *(S[0,0] + S[2,2]) )* np.exp(2.0j * zeta[i] * L)
-        bd[i] = S[3,0] + 1.0j * L * (S[3,2]-S[1,0])       
-        i=i+1        
-    return a, b, ad, bd
-
+	
 
 def calc_ab_centraldifference_vanilla( dx, L, q, zeta ):
 	a=np.zeros(len(zeta), dtype=complex)
@@ -204,7 +105,7 @@ def calc_ab_ablowitzladik_vanilla( dx, L, q, zeta ):
 		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
 	return a, b
 
-def calc_ab_ablowitzladik2_vanilla(  dx, L, q, zeta  ):
+def calc_ab_ablowitzladik2_vanilla(	 dx, L, q, zeta	 ):
 	a=np.zeros(len(zeta), dtype=complex)
 	b=np.zeros(len(zeta), dtype=complex)
 	for i in range(len(zeta)):
@@ -215,7 +116,7 @@ def calc_ab_ablowitzladik2_vanilla(  dx, L, q, zeta  ):
 			Qk = q[k]*dx
 			#R = np.array(	 [ [z, Qk],[-np.conj(Qk), 1./z]])
 			v[k+1]=1./ np.sqrt( 1+ np.abs(Qk)**2  )*np.dot ( np.array([ [z, Qk],[-np.conj(Qk), 1./z]]) , v[k])
-		a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		a[i] = v[-1,0] * np.exp(1.0j * zeta[i]	* L)
 		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
 	return a, b
 
@@ -237,30 +138,128 @@ def calc_ab_forwarddisc_vanilla(  dx, L, q, zeta  ):
 
 
 
-def calc_ab_diff_ablowitzladik_vanilla(  dx, L, q, zeta  ):
+def calc_ab_diff_rk4_vanilla2( dx, L, q, zeta ):
+	def fpk( qii, zetai): 
+		return np.array( [[ -1.0j * zetai	   ,  qii				, 0				   ,	 0 ],
+						  [1.0* -np.conj(qii)	,  1.0j * zetai		, 0				   ,	 0	],
+						  [ -1.0j				 ,	 0				   ,  -1.0j * zetai ,	qii ] ,
+						  [0					 ,	  1.0j			   ,  1.0* -np.conj(qii) ,	 1.0j * zetai]]
+						 )
+	a=np.zeros(len(zeta), dtype=complex)
+	b=np.zeros(len(zeta), dtype=complex)
+	adiff=np.zeros(len(zeta), dtype=complex)
+	bdiff=np.zeros(len(zeta), dtype=complex)
+	for i in range(len(zeta)):
+		v = np.zeros([len(q),4],dtype=complex)		
+		v[0,0] =			   np.exp( -1.0j * zeta[i] * -L)
+		v[0,2] =  -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
+		for ii in range(0,len(q)-1):
+			fpkqii =  fpk( q[ii], zeta[i])
+			k1 = np.dot( fpkqii, v[ii])
+			k2 = np.dot( fpkqii, v[ii] + dx/2.0 * k1)
+			k3 = np.dot( fpkqii, v[ii] + dx/2.0 * k2)
+			k4 = np.dot( fpkqii, v[ii] + dx *k3)
+			v[ii+1,:] = v[ii,:] +  dx * 1./6 *( k1 + 2*k2 + 2*k3 + k4)
+		a[i] = v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+		adiff[i] = (v[-1,2] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+		bdiff[i] = np.array([0])
+	return a, b, adiff, bdiff	 
+	
+def calc_abdiff_transfermatrix_vanilla( dx, L, q, zeta ):
+	a=np.zeros(len(zeta), dtype=np.complex)
+	b=np.zeros(len(zeta), dtype=np.complex)
+	ad=np.zeros(len(zeta), dtype=np.complex)
+	bd=np.zeros(len(zeta), dtype=np.complex)	
+	T = np.zeros( [4,4], dtype = np.complex)  
+	
+	zzet, qq = np.meshgrid(zeta,q)
+	kk=np.sqrt( -np.abs(qq)**2 - zzet**2+0.0j)
+	coshkdxm = np.cosh(kk*dx)
+	sinhkdxm = np.sinh(kk*dx)
+	UU00 = coshkdxm - 1.0j*zzet / kk * sinhkdxm
+	UU01 = qq/kk * sinhkdxm
+	UU10 = -1.0 * np.conj(qq) / kk * sinhkdxm
+	UU11 = coshkdxm + 1.0j* zzet / kk * sinhkdxm
+	
+	UD00 = 1.0j * dx * zzet**2 / kk**2 * coshkdxm \
+		   -(zzet * dx + 1.0j + 1.0j * zzet**2/kk**2) * sinhkdxm/kk
+	UD01 = -1 * qq * zzet / kk**2 * (dx * coshkdxm - sinhkdxm/kk)
+	UD10 = -1 * -1 * np.conj(qq) * zzet / kk**2 *(dx * coshkdxm - sinhkdxm/kk)
+	UD11 =	-1.0j * dx * zzet**2 / kk**2 * coshkdxm \
+		   -(zzet * dx - 1.0j - 1.0j * zzet**2/kk**2) * sinhkdxm/kk
+	i=0
+	while i <len(zeta):		 
+		S = np.zeros( [4,4], dtype = np.complex)
+		S[0,0] = 1.0
+		S[1,1] = 1.0
+		S[2,2] = 1.0
+		S[3,3] = 1.0
+		ii = len(q)-1
+		while ii>=0:  
+			T[0,0] = UU00[ii,i]
+			T[0,1] = UU01[ii,i]
+			T[1,0] = UU10[ii,i]
+			T[1,1] = UU11[ii,i]
+			
+			T[2,2] = UU00[ii,i]
+			T[2,3] = UU01[ii,i]
+			T[3,2] = UU10[ii,i]
+			T[3,3] = UU11[ii,i]
+			
+			T[2,0] = UD00[ii,i]
+			T[2,1] = UD01[ii,i]
+			T[3,0] = UD10[ii,i]
+			T[3,1] = UD11[ii,i]
+			S = np.dot(S, T)
+			ii=ii-1
+		a[i]=S[0,0] * np.exp ( 2.0j * zeta[i] * L)
+		b[i]=S[1,0]
+		ad[i] = ( S[2,0] + 1.0j * L *(S[0,0] + S[2,2]) )* np.exp(2.0j * zeta[i] * L)
+		bd[i] = S[3,0] + 1.0j * L * (S[3,2]-S[1,0])		  
+		i=i+1		 
+	return a, b, ad, bd	   
+	
+
+def calc_ab_diff_ablowitzladik_vanilla(	 dx, L, q, zeta	 ):
 	a=np.zeros(len(zeta), dtype=complex)
 	adiff=np.zeros(len(zeta), dtype=complex)
 	b=np.zeros(len(zeta), dtype=complex)
-
 	for i in range(len(zeta)):
-		v	  = np.zeros([len(q),2],dtype=complex)
-		vdiff = np.zeros([len(q),2],dtype=complex)
-
-		v[0]	 = np.array([  1, 0] ) *			  np.exp(-1.0j * zeta[i] * -L)
-		vdiff[0] = np.array([  1, 0] ) * -1.0j * -L * np.exp(-1.0j * zeta[i] * -L)
-
-		for k in range(0,len(q)-1):
+		v	  = np.zeros([len(q),4],dtype=complex)
+		v[0]	 = np.array([  1, 0,  -1.0j * -L , 0] ) *			  np.exp(-1.0j * zeta[i] * -L)
+		for ii in range(0,len(q)-1):
 			z = np.exp(-1.0j * zeta[i] * dx)
-			A	  = np.array( [[z	             	  , q[k] *dx ],
-			                   [-np.conj( q[k] )*dx   , 1.0	 / z]])
-			Adiff = np.array( [[-1.0j * z,		0.0j	 ],
-                            	[	 0.0j	  , 1.0j / z]]) *dx
-
-			v[k+1]	   = np.dot ( A, v[k] )
-			vdiff[k+1] = np.dot( Adiff, v[k]) + np.dot( A , vdiff[k])
-
-		a[i] =			v[-1,0] * np.exp(1.0j * zeta[i] * L)
-		adiff[i] = (vdiff[-1,0] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+			A	  = np.array( [[z					  , q[ii] *dx	  ,				0.0			 ,		0.0		],
+							   [-np.conj( q[ii] )*dx	  , 1.0	 / z	  ,				0.0			 ,		0.0		],
+							   [ -1.0j * dx * z		  , 0.0			  ,						 z	 ,	   q[ii] *dx ],
+							   [0.0					 , 1.0j* dx / z	 ,		-np.conj( q[ii] )*dx ,	   1.0/z   ]] )
+			v[ii+1]	   = np.dot ( A, v[ii] )
+		a[i] =	v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		adiff[i] = (v[-1,2] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
 		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
 		bdiff = np.array([0])
 	return a, b	, adiff, bdiff
+
+
+def calc_ab_diff_ablowitzladik2_vanilla(  dx, L, q, zeta  ):
+	a=np.zeros(len(zeta), dtype=complex)
+	adiff=np.zeros(len(zeta), dtype=complex)
+	b=np.zeros(len(zeta), dtype=complex)
+	for i in range(len(zeta)):
+		v	  = np.zeros([len(q),4],dtype=complex)
+		v[0]	 = np.array([  1, 0,  -1.0j * -L , 0] ) *			  np.exp(-1.0j * zeta[i] * -L)
+		for ii in range(0,len(q)-1):
+			z = np.exp(-1.0j * zeta[i] * dx)
+			A	  = np.array( [[z					  , q[ii] *dx	  ,				0.0			 ,		0.0		],
+							   [-np.conj( q[ii] )*dx	  , 1.0	 / z	  ,				0.0			 ,		0.0		],
+							   [ -1.0j * dx * z		  , 0.0			  ,						 z	 ,	   q[ii] *dx ],
+							   [0.0					 , 1.0j* dx / z	 ,		-np.conj( q[ii] )*dx ,	   1.0/z   ]] )
+			v[ii+1]	   = 1.0/ np.sqrt(1.0+ np.abs(q[ii]*dx)**2) * np.dot ( A, v[ii] )
+		a[i] =	v[-1,0] * np.exp(1.0j * zeta[i] * L)
+		adiff[i] = (v[-1,2] + 1.0j * L * v[-1,0]) * np.exp(1.0j * zeta[i] *L)
+		b[i] = v[-1,1] * np.exp(-1.0j * zeta[i] * L)
+		bdiff = np.array([0])
+	return a, b	, adiff, bdiff	  
+	
+
