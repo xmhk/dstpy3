@@ -125,10 +125,10 @@ try:
 	abdiff_methodnamesdict['TMFQ'] = 'Runge-Kutta 4 (Fortran, quad)'
 
 	
-	abdiff_methodsdict['AL'] = calc_abdiff_al_flib
-	abdiff_methodnamesdict['AL'] = 'Ablowitz-Ladik (Fortran)'
-	abdiff_methodsdict['AL'] = calc_abdiff_al2_flib
-	abdiff_methodnamesdict['AL'] = 'Ablowitz-Ladik2 (Fortran)'
+	abdiff_methodsdict['ALF'] = calc_abdiff_al_flib
+	abdiff_methodnamesdict['ALF'] = 'Ablowitz-Ladik (Fortran)'
+	abdiff_methodsdict['AL2F'] = calc_abdiff_al2_flib
+	abdiff_methodnamesdict['AL2F'] = 'Ablowitz-Ladik2 (Fortran)'
 	
   
 except ImportError:
