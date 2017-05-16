@@ -176,7 +176,7 @@ class DSTObj():
 		self.calc_abdiff_methodnamesdict =abdiff_methodnamesdict
 
 
-	def calc_ab(self,zetas, method = 'TMC'):
+	def calc_ab(self,zetas, method = 'TMF'):
 		if method not in self.calc_ab_methodsdict.keys():
 			print("\n calc_ab method should be in ",self.calc_ab_methodsdict.keys())
 			a = 0
@@ -192,7 +192,7 @@ class DSTObj():
 				b = b[0]
 		return a,b
 
-	def calc_abdiff(self,zetas, method = 'ALC'):
+	def calc_abdiff(self,zetas, method = 'TMF'):
 		if method not in self.calc_abdiff_methodsdict.keys():
 			print("\n calc_ab method should be in ",self.calc_ab_methodsdict.keys())
 			a = 0
