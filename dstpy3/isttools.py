@@ -152,7 +152,7 @@ def evsearch2(dob,
         # check whether there are any guesses; if not use random guess
         #
         if len(guesses) == 0:                        
-            zm = 2* (np.random.rand() -0.5) * solrelom  + 1.0j * np.random.rand() * np.abs( actzetamax )
+            zm = 2* (np.random.rand() -0.5) * solrelom * dob.ommax  + 1.0j * np.random.rand() * np.abs( actzetamax ) 
         else:            
             zm = guesses.pop()+ 0.0j                                  
             logobject.appnd("%d/%d      checking guess: %s"%(aktite, maxite, cplxrpr(zm)))
@@ -160,9 +160,10 @@ def evsearch2(dob,
         solite = 0; a = 0.0; ad = 1.0 #convenience for while loop ... do not move on the first step and set to harmless values     
         #
         # use iteration for refine soliton; check sanity
-        #
+        #        
+        ##logobject.appnd("Aktite %d: candidate %s"%(aktite, cplxrpr(zm)))
         while (solite < solitemax):
-            solite +=1 
+            solite +=1             
             #
             # check sanity of spectral data
             #
@@ -223,6 +224,7 @@ def evsearch2(dob,
     rd = {}
     rd['aspec'] = aspec     
     rd['spectrum'] = spectrum
+    rd['ov'] = ov
     rd['E_spec'] = spece
     rd['E_max'] = dob.zetamax
     rd['E_sol'] = np.sum(np.imag(solitonsfound))
@@ -250,195 +252,196 @@ def evsearch2(dob,
                                             rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
         else:
             rd['converged'] = False        
-            logobject.appnd("NOT CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
-                                            rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
+            logobject.appnd("NOT CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)\n (aktite = %d)"%(rd['E_spec'], rd['E_sol'], 
+                                            rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max'], aktite))
     else:
         rd['converged'] = False         
         logobject.appnd("NOT CONVERGED -- a-Spectrum contains NaN or INF")
     #
     #sort solitons found by imag evals, descending        
     #    
-    rd['evals'] = sorted( solitonsfound, key=lambda x: -1 * np.imag(x))   
+    rd['evals'] = sorted( solitonsfound, key=lambda x:  np.imag(x))   
     rd['log'] = logobject.log    
+    guesses = []
     return rd 
  
-    
-def evsearch(dob, 
-            maxite = 30, 
-            solitemax = 30,
-            methodspec = 'TMF',
-            methodite = 'RK4F',            
-            absamin = 1e-14 , 
-            solreldist = 1e-4,
-            reletol = 0.05, 
-            solrelom = 0.6,  
-            guesses = [], 
-            specoffs = 0.5,
-            externalaspec = {'use':False, 'ov':0, 'aspec':0}, 
-            verbose=False ):
 
-    def cplxrpr(z):  #shortcut for printing a complex number
-        return "%.3e + %.3ej"%(np.real(z), np.imag(z))
+# def evsearch(dob, 
+            # maxite = 30, 
+            # solitemax = 30,
+            # methodspec = 'TMF',
+            # methodite = 'RK4F',            
+            # absamin = 1e-14 , 
+            # solreldist = 1e-4,
+            # reletol = 0.05, 
+            # solrelom = 0.6,  
+            # guesses = [], 
+            # specoffs = 0.5,
+            # externalaspec = {'use':False, 'ov':0, 'aspec':0}, 
+            # verbose=False ):
+
+    # def cplxrpr(z):  #shortcut for printing a complex number
+        # return "%.3e + %.3ej"%(np.real(z), np.imag(z))
     
-    class logobj():    #conbined logging + printing (if verbose)
-        def __init__(self, verbose):
-            self.log=[]
-            self.verbose=verbose
-        def appnd(self, strng):
-            self.log.append(strng)
-            if self.verbose:
-                print(strng)
+    # class logobj():    #conbined logging + printing (if verbose)
+        # def __init__(self, verbose):
+            # self.log=[]
+            # self.verbose=verbose
+        # def appnd(self, strng):
+            # self.log.append(strng)
+            # if self.verbose:
+                # print(strng)
                 
-    def cdistance(z1, z2, dob ): # return normalized distance
-        return np.abs(np.real(z1) - np.real(z2)) / dob.ommax +np.abs(np.imag(z1) - np.imag(z2)) / dob.zetamax    
+    # def cdistance(z1, z2, dob ): # return normalized distance
+        # return np.abs(np.real(z1) - np.real(z2)) / dob.ommax +np.abs(np.imag(z1) - np.imag(z2)) / dob.zetamax    
   
-    logobject = logobj(verbose)
+    # logobject = logobj(verbose)
   
-    #
-    # use external given spec or calculate
-    #
-    if externalaspec['use']==True:  
-        aspec = externalaspec['aspec']
-        ov = externalaspec['ov']        
-        logobject.appnd("%d/%d use external spec"%(0,maxite))
-    else:
-        #    
-        # specoffs: shift ov values -> a pure 0.000... sometimes gives NaN result
-        #
-        ov = ( np.arange(-len(dob.xvec)/2, len(dob.xvec)/2 ) + specoffs) * dob.scaled_dom
-        #
-        # spectrum: calculation NEEDS a Transfer-Matrix-Method (Boffetta), osthers fail for high freqs
-        #
-        aspec,tmp = dob.calc_ab(ov+0.0j, method=methodspec)  
+    # #
+    # # use external given spec or calculate
+    # #
+    # if externalaspec['use']==True:  
+        # aspec = externalaspec['aspec']
+        # ov = externalaspec['ov']        
+        # logobject.appnd("%d/%d use external spec"%(0,maxite))
+    # else:
+        # #    
+        # # specoffs: shift ov values -> a pure 0.000... sometimes gives NaN result
+        # #
+        # ov = ( np.arange(-len(dob.xvec)/2, len(dob.xvec)/2 ) + specoffs) * dob.scaled_dom
+        # #
+        # # spectrum: calculation NEEDS a Transfer-Matrix-Method (Boffetta), osthers fail for high freqs
+        # #
+        # aspec,tmp = dob.calc_ab(ov+0.0j, method=methodspec)  
     
-    specissane = True
-    #
-    # check whether aspec is sane -- not Infs, no NaNs
-    #
-    if len(np.nonzero(np.invert( np.isfinite(aspec) ))[0])!=0:
-        specissane = False    
-    spectrum =  np.abs(-1/np.pi * np.log(np.abs(aspec)))    
-    spece = np.trapz(spectrum , x=ov) / 2.0 # 2.0: scaling may differ depending on normalization...
-    actzetamax = dob.zetamax - spece      
-    #
-    # Loop over iterations (distinct attempts to search for solitons)
-    #
-    aktite = 0
-    solitonsfound = []    
-    solitonsnumber = 0
-    while (aktite<maxite) and np.abs(actzetamax) > reletol * dob.zetamax and specissane :   # loop until residuum energy < tol or maxite        
-        aktite += 1
-        #
-        # check whether there are any guesses; if not use random guess
-        #
-        if len(guesses) == 0:                        
-            zm = 2* (np.random.rand() -0.5) * solrelom  + 1.0j * np.random.rand() * np.abs( actzetamax )
-        else:            
-            zm = guesses.pop()+ 0.0j                                  
-            logobject.appnd("%d/%d      checking guess: %s"%(aktite, maxite, cplxrpr(zm)))
+    # specissane = True
+    # #
+    # # check whether aspec is sane -- not Infs, no NaNs
+    # #
+    # if len(np.nonzero(np.invert( np.isfinite(aspec) ))[0])!=0:
+        # specissane = False    
+    # spectrum =  np.abs(-1/np.pi * np.log(np.abs(aspec)))    
+    # spece = np.trapz(spectrum , x=ov) / 2.0 # 2.0: scaling may differ depending on normalization...
+    # actzetamax = dob.zetamax - spece      
+    # #
+    # # Loop over iterations (distinct attempts to search for solitons)
+    # #
+    # aktite = 0
+    # solitonsfound = []    
+    # solitonsnumber = 0
+    # while (aktite<maxite) and np.abs(actzetamax) > reletol * dob.zetamax and specissane :   # loop until residuum energy < tol or maxite        
+        # aktite += 1
+        # #
+        # # check whether there are any guesses; if not use random guess
+        # #
+        # if len(guesses) == 0:                        
+            # zm = 2* (np.random.rand() -0.5) * solrelom  + 1.0j * np.random.rand() * np.abs( actzetamax )
+        # else:            
+            # zm = guesses.pop()+ 0.0j                                  
+            # logobject.appnd("%d/%d      checking guess: %s"%(aktite, maxite, cplxrpr(zm)))
             
-        solite = 0; a = 0.0; ad = 1.0 #convenience for while loop ... do not move on the first step and set to harmless values     
-        #
-        # use iteration for refine soliton; check sanity
-        #
-        while (solite < solitemax):
-            solite +=1 
-            #
-            # check sanity of spectral data
-            #
-            if np.isfinite(a) and np.isfinite(ad) and np.isfinite(zm):   #exclude NANs, INFs               
-                zm = zm - a/ad       
-                a,b,ad,bd = dob.calc_abdiff(zm, method = methodite)
-                #
-                # check sanity of candidate
-                #
-                if  np.isfinite(zm) and ( np.imag(zm) <= actzetamax * 1.05)\
-                and (np.abs( np.real(zm))  <= dob.ommax * solrelom) \
-                and (np.abs(a) <= absamin):
-                    candidate = True
-                    if np.imag(zm ) < 0:
-                        candidate = False
-                        solite = solitemax
-                        logobject.appnd("%d/%d      -> invalid candidate: %s  (Im<0)"%(aktite,maxite,cplxrpr(zm)))
-                    for lam in solitonsfound:
-                        #
-                        # check doubles
-                        #
-                        if cdistance(zm, lam, dob )<solreldist:
-                                candidate = False                                                                
-                                logobject.appnd("%d/%d      -> candidate already in list: %s\n                                     Sol. %s, rel. dist. %.2e"%(\
-                                           aktite, maxite, cplxrpr(zm), cplxrpr(zm), cdistance(lam, zm, dob)))
-                                solite = solitemax # exit soliton iteration loop next iteration
-                    if candidate:
-                        #
-                        # new soliton found. Log + append
-                        #
-                        solitonsfound.append(zm)                         
-                        logobject.appnd("%d/%d SOLITON found: %s (|a| = %.3e)"%(aktite, maxite, cplxrpr(zm), np.abs(a)))
-                        actzetamax = dob.zetamax - spece - np.sum(np.imag(solitonsfound))
-                        solite = solitemax # exit soliton iteration loop next iteration
-                        solitonsnumber+=1
-                        #
-                        # use the newly found soliton: check whether the real conjugate is known; if not append to guesses
-                        # (speed-up for symmetric problems)
-                        #
-                        zmrconj = -1 * np.real(zm) + 1.0j * np.imag(zm)
-                        zmrcand = True                                
-                        for lam in solitonsfound:                         
-                            if cdistance(lam, zmrconj, dob)<solreldist: 
-                                    zmrcand = False
-                        if zmrcand:
-                            logobject.appnd("%d/%d      -> adding candidate to list: %s"%( aktite, maxite, cplxrpr(zmrconj)))
-                            guesses.append(-1* np.real(zm) + 1.0j * np.imag(zm))                            
+        # solite = 0; a = 0.0; ad = 1.0 #convenience for while loop ... do not move on the first step and set to harmless values     
+        # #
+        # # use iteration for refine soliton; check sanity
+        # #
+        # while (solite < solitemax):
+            # solite +=1 
+            # #
+            # # check sanity of spectral data
+            # #
+            # if np.isfinite(a) and np.isfinite(ad) and np.isfinite(zm):   #exclude NANs, INFs               
+                # zm = zm - a/ad       
+                # a,b,ad,bd = dob.calc_abdiff(zm, method = methodite)
+                # #
+                # # check sanity of candidate
+                # #
+                # if  np.isfinite(zm) and ( np.imag(zm) <= actzetamax * 1.05)\
+                # and (np.abs( np.real(zm))  <= dob.ommax * solrelom) \
+                # and (np.abs(a) <= absamin):
+                    # candidate = True
+                    # if np.imag(zm ) < 0:
+                        # candidate = False
+                        # solite = solitemax
+                        # logobject.appnd("%d/%d      -> invalid candidate: %s  (Im<0)"%(aktite,maxite,cplxrpr(zm)))
+                    # for lam in solitonsfound:
+                        # #
+                        # # check doubles
+                        # #
+                        # if cdistance(zm, lam, dob )<solreldist:
+                                # candidate = False                                                                
+                                # logobject.appnd("%d/%d      -> candidate already in list: %s\n                                     Sol. %s, rel. dist. %.2e"%(\
+                                           # aktite, maxite, cplxrpr(zm), cplxrpr(zm), cdistance(lam, zm, dob)))
+                                # solite = solitemax # exit soliton iteration loop next iteration
+                    # if candidate:
+                        # #
+                        # # new soliton found. Log + append
+                        # #
+                        # solitonsfound.append(zm)                         
+                        # logobject.appnd("%d/%d SOLITON found: %s (|a| = %.3e)"%(aktite, maxite, cplxrpr(zm), np.abs(a)))
+                        # actzetamax = dob.zetamax - spece - np.sum(np.imag(solitonsfound))
+                        # solite = solitemax # exit soliton iteration loop next iteration
+                        # solitonsnumber+=1
+                        # #
+                        # # use the newly found soliton: check whether the real conjugate is known; if not append to guesses
+                        # # (speed-up for symmetric problems)
+                        # #
+                        # zmrconj = -1 * np.real(zm) + 1.0j * np.imag(zm)
+                        # zmrcand = True                                
+                        # for lam in solitonsfound:                         
+                            # if cdistance(lam, zmrconj, dob)<solreldist: 
+                                    # zmrcand = False
+                        # if zmrcand:
+                            # logobject.appnd("%d/%d      -> adding candidate to list: %s"%( aktite, maxite, cplxrpr(zmrconj)))
+                            # guesses.append(-1* np.real(zm) + 1.0j * np.imag(zm))                            
                         
-            #
-            # log numerical problems
-            # 
-            else: 
-                logobject.appnd("%d/%d numerical problem: solite=%d , a = %s, ad = %s, zm = %s"%(aktite, maxite, solite,repr(a), repr(ad), repr(zm) ))                
-                solite = solitemax
-    #
-    # build return dict
-    #
-    rd = {}
-    rd['aspec'] = aspec     
-    rd['spectrum'] = spectrum
-    rd['E_spec'] = spece
-    rd['E_max'] = dob.zetamax
-    rd['E_sol'] = np.sum(np.imag(solitonsfound))
-    rd['solitons_number'] = solitonsnumber
-    rd['E_diff'] = dob.zetamax - rd['E_sol'] - rd['E_spec']   
-    rd['paramliste'] = [['maxite',maxite],
-                        ['solitemax',solitemax], 
-                        ['absamin', absamin], 
-                        ['solreldist', solreldist],
-                        ['solrelom',solrelom],
-                       ['reletol', reletol], 
-                       ['methodite',methodite], 
-                       ['methodspec',methodspec],
-                       ['specoffs',specoffs],
-                       #['guesses',guesses],    #including guesses can give some crazy errors
-                       #                         with sio.savemat                                              
-                       ['externalspec',externalaspec['use']]]    
-    #
-    # converged or not?
-    #
-    if specissane:
-        if aktite< maxite:        
-            rd['converged'] = True        
-            logobject.appnd("CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
-                                            rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
-        else:
-            rd['converged'] = False        
-            logobject.appnd("NOT CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
-                                            rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
-    else:
-        rd['converged'] = False         
-        logobject.appnd("NOT CONVERGED -- a-Spectrum contains NaN or INF")
-    #
-    #sort solitons found by imag evals, descending        
-    #    
-    rd['evals'] = sorted( solitonsfound, key=lambda x: -1 * np.imag(x))   
-    rd['log'] = logobject.log    
-    return rd    
+            # #
+            # # log numerical problems
+            # # 
+            # else: 
+                # logobject.appnd("%d/%d numerical problem: solite=%d , a = %s, ad = %s, zm = %s"%(aktite, maxite, solite,repr(a), repr(ad), repr(zm) ))                
+                # solite = solitemax
+    # #
+    # # build return dict
+    # #
+    # rd = {}
+    # rd['aspec'] = aspec     
+    # rd['spectrum'] = spectrum
+    # rd['E_spec'] = spece
+    # rd['E_max'] = dob.zetamax
+    # rd['E_sol'] = np.sum(np.imag(solitonsfound))
+    # rd['solitons_number'] = solitonsnumber
+    # rd['E_diff'] = dob.zetamax - rd['E_sol'] - rd['E_spec']   
+    # rd['paramliste'] = [['maxite',maxite],
+                        # ['solitemax',solitemax], 
+                        # ['absamin', absamin], 
+                        # ['solreldist', solreldist],
+                        # ['solrelom',solrelom],
+                       # ['reletol', reletol], 
+                       # ['methodite',methodite], 
+                       # ['methodspec',methodspec],
+                       # ['specoffs',specoffs],
+                       # #['guesses',guesses],    #including guesses can give some crazy errors
+                       # #                         with sio.savemat                                              
+                       # ['externalspec',externalaspec['use']]]    
+    # #
+    # # converged or not?
+    # #
+    # if specissane:
+        # if aktite< maxite:        
+            # rd['converged'] = True        
+            # logobject.appnd("CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
+                                            # rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
+        # else:
+            # rd['converged'] = False        
+            # logobject.appnd("NOT CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
+                                            # rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
+    # else:
+        # rd['converged'] = False         
+        # logobject.appnd("NOT CONVERGED -- a-Spectrum contains NaN or INF")
+    # #
+    # #sort solitons found by imag evals, descending        
+    # #    
+    # rd['evals'] = sorted( solitonsfound, key=lambda x: -1 * np.imag(x))   
+    # rd['log'] = logobject.log    
+    # return rd    
     
