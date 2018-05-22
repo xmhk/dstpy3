@@ -85,9 +85,16 @@ def evsearch2(dob,
             parallel = False,
             verbose=False ):
 
-    def cplxrpr(z):  #shortcut for printing a complex number
+    def cplxrpr(z, digits=2, dynformat=False):  #shortcut for printing a complex number
         if np.isfinite(z):
-            return "%.3e + %.3ej"%(np.real(z), np.imag(z))
+            #return "%.3e + %.3ej"%(np.real(z), np.imag(z))            
+            imz = float(np.imag(z))
+            rz = float(np.real(z))
+            if dynformat:
+                a = '{: .{digs}g} {:+.{digs}g}j'.format(rz,imz,digs=digits, )
+            else:
+                a = '{: .{digs}e} {:+.{digs}e}j'.format(rz,imz,digs=digits, )
+            return a
         else:
             return "NAN"
             
@@ -112,22 +119,7 @@ def evsearch2(dob,
         return np.abs(np.real(z1) - np.real(z2)) / CDDdob.ommax +np.abs(np.imag(z1) - np.imag(z2)) / CDDdob.zetamax    
         
         
-    def check_soliton_iteration_result(CSI_zm, CSI_a, CSI_ad, CSI_dob, CSI_solrelom, CSI_solreldist, CSI_actzetamax, CSI_absamin, CSI_knownlist):
-        # check the iteration result for soliton candidates (called from inner loop)
-        if (not np.isfinite(CSI_a)) or (not np.isfinite(CSI_ad)) or (not np.isfinite(CSI_zm)):
-            return 1
-        if np.abs(np.real(CSI_zm))>CSI_dob.ommax * CSI_solrelom * 1.05:
-            return 2
-        if np.imag(CSI_zm)>CSI_actzetamax * 1.05:
-            return 3
-        if np.imag(CSI_zm)< 0:
-            return 4
-        if np.abs(CSI_a)>CSI_absamin:
-            return 5
-        if not check_newcandidate(CSI_zm, CSI_knownlist, CSI_solreldist, CSI_dob):
-            return 6
-        ### none of the above:
-        return 0
+
   
     LogForThisRun = logobj(verbose)
   
@@ -179,52 +171,52 @@ def evsearch2(dob,
     # 
     while (aktite<maxite) and np.abs(actzetamax) > reletol * dob.zetamax and specissane :   
         aktite += 1
+        
         if len(guesses) == 0:                        
-            zm = 2* (np.random.rand() -0.5) * solrelom * dob.ommax  + 1.0j * np.random.rand() * np.abs( actzetamax ) 
-            LogForThisRun.appnd("%d/%d  starting with random value: %s"%(aktite, maxite, cplxrpr(zm)))
+            #zm = 2* (np.random.rand() -0.5) * solrelom * dob.ommax  + 1.0j * np.random.rand() * np.abs( actzetamax ) 
+            # ... we use normal distribution here, as in most of our cases evals are near to zero 
+            zm = np.random.normal(loc=0.0,scale=0.5 * solrelom * dob.ommax) + 1.0j * np.random.rand() * np.abs( actzetamax )             
+            #m = np.random.normal(loc=0.0,scale=0.5 * solrelom * dob.ommax) + 1.0j * np.random.lognormal(mean=actzetamax/2, sigma = actzetamax/4  )             
+            LogForThisRun.appnd("{:3d}/{:3d} RAND {}".format(aktite, maxite, cplxrpr(zm, digits=3)))
         else:            
             zm = guesses.pop()+ 0.0j                                  
-            LogForThisRun.appnd("%d/%d  checking guess: %s"%(aktite, maxite, cplxrpr(zm)))        
+            LogForThisRun.appnd("{:3d}/{:3d} GUESS {}".format(aktite, maxite, cplxrpr(zm, digits=3)))
         #
         # try solitemax times to iterate until error or soliton found
         #
         solite = 0; a = 0.0; ad = 1.0 
-        while (solite < solitemax):
-            solite +=1             
-            zm = zm - a/ad       
+        while (solite < solitemax):        
+            solite +=1
+            zm = zm - a/ad
             a,b,ad,bd = dob.calc_abdiff(zm, method = methodite)
-            solitecheck = check_soliton_iteration_result(zm, a, ad, dob, solrelom, solreldist, actzetamax, absamin, solitonsfound)
-            if solitecheck == 1:
-                LogForThisRun.appnd("     sub %d/%d: numerical problem (a = %s, ad = %s, zm = %s)"%(solite, solitemax,repr(a), repr(ad), repr(zm)))                               
-                solite = solitemax                
-            if solitecheck == 2:
+            if (not np.isfinite(a)) or (not np.isfinite(ad)) or (not np.isfinite(zm)):                
+                LogForThisRun.appnd("       {:3d}/{:3d} NUMERICAL        {} (a = {}, ad = {}))".format(solite,solitemax,  repr(zm) , repr(a), repr(ad)))
                 solite = solitemax
-                LogForThisRun.appnd("     sub %d/%d: real part too big: zm = %s "%(solite, solitemax, cplxrpr(zm)))
-            if solitecheck == 3:
+            elif np.abs(np.real(zm))>dob.ommax * solrelom * 1.05:
+                LogForThisRun.appnd("       {:3d}/{:3d} REAL to BIG      {} (max = {:.3f})".format(solite, solitemax, cplxrpr(zm, digits=3), solrelom*dob.ommax))
                 solite = solitemax
-                LogForThisRun.appnd("     sub %d/%d: imag part too big: zm = %s "%(solite, solitemax, cplxrpr(zm)))    
-            if solitecheck == 4:
+            elif np.imag(zm)>actzetamax * 1.05:                
+                LogForThisRun.appnd("       {:3d}/{:3d} IMAG to BIG      {} (max = {:.3e} i)".format(solite, solitemax, cplxrpr(zm, digits=3), actzetamax))    
                 solite = solitemax
-                LogForThisRun.appnd("     sub %d/%d: imag part negative: zm = %s "%(solite, solitemax, cplxrpr(zm)))    
-            if solitecheck == 6:
+            elif np.imag(zm)< 0:                
+                LogForThisRun.appnd("       {:3d}/{:3d} IMAG NEG         {} ".format(solite, solitemax, cplxrpr(zm, digits=2)))    
                 solite = solitemax
-                LogForThisRun.appnd("     sub %d/%d: zm = %s already known"%(solite, solitemax, cplxrpr(zm)))
-            #
-            # keep iterating or soliton found  
-            #
-            if solitecheck == 5:                
-                LogForThisRun.appnd("     sub %d/%d: iterating: zm = %s  |a| = %.1e"%(solite, solitemax, cplxrpr(zm),np.abs(a)))
-            if solitecheck == 0:                
-                LogForThisRun.appnd("     sub %d/%d: SOLITON FOUND: zm = %s  |a| = %.1e"%(solite, solitemax, cplxrpr(zm),np.abs(a)))
+            elif np.abs(a)>absamin:                
+                LogForThisRun.appnd("       {:3d}/{:3d}                  {} |a|={:.1e}".format(solite, solitemax, cplxrpr(zm, digits=1),np.abs(a)))
+            elif not check_newcandidate(zm, solitonsfound, solreldist, dob):                
+                LogForThisRun.appnd("       {:3d}/{:3d} KNOWN            {} ".format(solite, solitemax, cplxrpr(zm, digits=3)))
+                solite = solitemax
+            else:
+                LogForThisRun.appnd("       {:3d}/{:3d} NEW              {} |a|={:.1e}".format(solite, solitemax, cplxrpr(zm, digits=4),np.abs(a)))
                 solitonsfound.append(zm)
-                actzetamax = dob.zetamax - spece - np.sum(np.imag(solitonsfound))
-                solite = solitemax # exit soliton iteration loop next iteration
+                actzetamax = dob.zetamax - spece - np.sum(np.imag(solitonsfound))                
                 solitonsnumber+=1
                 ## symmetry? -> check whether mirrored eigenvalue already known
                 zmrconj = -1 * np.real(zm) + 1.0j * np.imag(zm)
                 if check_newcandidate(zmrconj, solitonsfound, solreldist, dob):
-                    LogForThisRun.appnd("%d/%d      -> adding candidate to list: %s"%( aktite, maxite, cplxrpr(zmrconj)))
-                    guesses.append(-1* np.real(zm) + 1.0j * np.imag(zm)) 
+                    LogForThisRun.appnd("       {:3d}/{:3d}   -> adding candidate to list: {}".format( aktite, maxite, cplxrpr(zmrconj)))
+                    guesses.append(-1* np.real(zm) + 1.0j * np.imag(zm))
+                solite = solitemax # exit soliton iteration loop next iteration
     #
     # build return dict
     #
@@ -255,11 +247,11 @@ def evsearch2(dob,
     if specissane:
         if aktite< maxite:        
             rd['converged'] = True        
-            LogForThisRun.appnd("CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)"%(rd['E_spec'], rd['E_sol'], 
+            LogForThisRun.appnd("CONVERGED ... E_spec={:.1e} E_sol={:.1e} E_max={:.1e} E_diff={:.1e} ({:.1e} rel)".format(rd['E_spec'], rd['E_sol'], 
                                             rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max']))
         else:
             rd['converged'] = False        
-            LogForThisRun.appnd("NOT CONVERGED ... E_spec=%.1e E_sol=%.1e E_max=%.1e E_diff=%.1e (%.1e rel)\n (aktite = %d)"%(rd['E_spec'], rd['E_sol'], 
+            LogForThisRun.appnd("NOT CONVERGED ... E_spec={:.1e} E_sol={:.1e} E_max={:.1e} E_diff={:.1e} ({:.1e} rel)\n (aktite = {:d})".format(rd['E_spec'], rd['E_sol'], 
                                             rd['E_max'], rd['E_diff'], rd['E_diff']/rd['E_max'], aktite))
     else:
         rd['converged'] = False         
