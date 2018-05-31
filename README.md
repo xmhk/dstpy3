@@ -13,6 +13,7 @@ It includes implementations of several algorithms presented e.g. in [2-5], mostl
 
 ## minimal example (plain python)
 
+```
 from dstpy3 import *
 import numpy as np
 from isttools import *   # isttools.py should be import seperately ... is located in dstpy folder
@@ -34,7 +35,7 @@ for i in range(len(ews['evals'])):
 CONV? 1  Ediff 4.552e-04  Esol 2.600e+00 Espec 4.500e-02
 0 Re: 3.403e-26  Im: 7.999e-01
 1 Re: 6.248e-21  Im: 1.800e+00
-
+```
 
 
 ## references
