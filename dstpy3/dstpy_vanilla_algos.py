@@ -25,8 +25,8 @@ def calc_ab_transfermatrix_vanilla (dx, L, q, zeta ):
 	i =0
 	qlength = np.shape(q)[0]
 	zetalength = np.shape(zeta)[0]
-	b = np.zeros([len(zeta),1], dtype =np.complex)
-	a = np.zeros([len(zeta),1], dtype =np.complex)
+	a=np.zeros(len(zeta), dtype=complex)
+	b=np.zeros(len(zeta), dtype=complex)
 	zzet, qq = np.meshgrid(zeta,q)
 	kk=np.sqrt( -np.abs(qq)**2 - zzet**2+0.0j)
 	coshkdxm = np.cosh(kk*dx)
